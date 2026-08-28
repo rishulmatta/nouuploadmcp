@@ -2,7 +2,7 @@
 
 A local consent gateway that lets agents work on your private documents without the documents ever leaving your device.
 
-Live demo: **https://nouploadmcp.vercel.app** (Vercel)
+Live demo: **https://nouploadmcp.app** (Vercel)
 
 ## What this is
 
