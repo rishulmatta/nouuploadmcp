@@ -1,12 +1,19 @@
 import { useEffect, useState } from 'react'
 import { useCallCount } from '../core/mcp'
 
+function getModelContext() {
+  if (typeof window === 'undefined') return undefined
+  return (window as unknown as Record<string, unknown>).modelContext
+    ?? (typeof document !== 'undefined' ? (document as unknown as Record<string, unknown>).modelContext : undefined)
+    ?? (typeof navigator !== 'undefined' ? (navigator as unknown as Record<string, unknown>).modelContext : undefined)
+}
+
 export default function AgentStatusPill() {
   const calls = useCallCount()
   const [present, setPresent] = useState(false)
 
   useEffect(() => {
-    const check = () => setPresent(typeof window.modelContext !== 'undefined')
+    const check = () => setPresent(getModelContext() !== undefined)
     check()
     const id = setInterval(check, 1000)
     return () => clearInterval(id)

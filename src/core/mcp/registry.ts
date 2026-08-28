@@ -18,11 +18,38 @@ function parametersToInputSchema(parameters: ToolSpec['parameters']) {
   }
 }
 
+function getModelContext(): { registerTool: (tool: unknown, options?: unknown) => void } | undefined {
+  if (typeof window === 'undefined') return undefined
+  const mc = (window as unknown as Record<string, unknown>).modelContext
+    ?? (typeof document !== 'undefined' ? (document as unknown as Record<string, unknown>).modelContext : undefined)
+    ?? (typeof navigator !== 'undefined' ? (navigator as unknown as Record<string, unknown>).modelContext : undefined)
+  if (mc && typeof (mc as { registerTool?: unknown }).registerTool === 'function') {
+    return mc as { registerTool: (tool: unknown, options?: unknown) => void }
+  }
+  return undefined
+}
+
 class Registry {
   private tools = new Map<string, ToolSpec>()
   private controllers = new Map<string, AbortController>()
   private calls: ToolCall[] = []
   private listeners = new Set<() => void>()
+  private synced = false
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      // Re-sync if modelContext appears after initial load
+      const check = () => {
+        if (getModelContext() && !this.synced) {
+          this.syncAll()
+        }
+      }
+      const id = setInterval(check, 1000)
+      window.addEventListener('focus', check)
+      // stop polling after 60s
+      setTimeout(() => clearInterval(id), 60000)
+    }
+  }
 
   register(spec: ToolSpec) {
     if (this.tools.has(spec.name)) {
@@ -89,10 +116,20 @@ class Registry {
     return result
   }
 
+  private syncAll() {
+    for (const spec of this.tools.values()) {
+      this.syncToWindow(spec)
+    }
+    this.synced = true
+  }
+
   private syncToWindow(spec: ToolSpec) {
-    if (typeof window === 'undefined') return
-    const mc = window.modelContext
-    if (!mc?.registerTool) return
+    const mc = getModelContext()
+    if (!mc) return
+    const c = this.controllers.get(spec.name)
+    if (c) {
+      c.abort()
+    }
     const controller = new AbortController()
     this.controllers.set(spec.name, controller)
     const inputSchema = parametersToInputSchema(spec.parameters)
