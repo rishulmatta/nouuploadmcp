@@ -1,4 +1,5 @@
 import type { ToolSpec } from './types'
+import { listAudit } from '../storage/audit'
 
 export const coreTools: ToolSpec[] = [
   {
@@ -34,6 +35,16 @@ export const coreTools: ToolSpec[] = [
     handler: ({ plugin }) => {
       // TODO: wire to app state
       return { selected: plugin }
+    },
+  },
+  {
+    name: 'get_audit_log',
+    description: 'Return the full audit log of disclosures and denials.',
+    parameters: [],
+    tier: 'read',
+    handler: async () => {
+      const entries = await listAudit()
+      return { entries }
     },
   },
 ]
