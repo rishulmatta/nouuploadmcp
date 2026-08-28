@@ -52,7 +52,7 @@ See [docs/WEBMCP.md](./docs/WEBMCP.md).
 - No financial product, allocation, or instrument recommendations.
 - No clinical interpretation, diagnosis, dosing, or supplement guidance.
 - No accounts, sync, sharing, or telemetry.
-- Labs plugin is present as an unwired skeleton (secondary, gated on completion).
+- Labs plugin (blood test reports) is wired: extraction, reference-range review, and diet-plan proposals.
 
 ## License
 

@@ -11,13 +11,15 @@
 | **Primary plugin** | Financial statements |
 | **Secondary plugin** | Blood test reports (gated on Gate 4) |
 
+**v4 correction:** the finance journey (§7) is illustrative, not a scripted sequence — the actual interaction is an open-ended conversation with the human's own agent (Codex, Claude, ChatGPT), which can ask anything (a full plan, category clustering, a one-off question) against the aggregation tools in §6 and render the answer back on the page. The goal/plan model (§7 steps 18–24, §8) now covers **two goal kinds**: a savings goal (target, current, assumed return) and a debt/loan goal (outstanding balance, payoff target, interest rate/APR) — both expose target, current balance, and rate as sliders, and the agent can propose either a savings plan or a repayment plan.
+
 **v3 additions:** §17 SPA route map and home page design with ready copy · §18 legal, disclosures and the disclosure statement page · §19 fixtures and anonymisation.
 
 **v2 changes:** finance is now the primary plugin (real data available), labs is secondary. Adds the shared five-stage pipeline, reference-range fallback with provenance, and the goal-planner stage with sliders as a continuous review surface.
 
 ### Why finance leads
 
-You have twelve months of real statements — so you build against reality instead of guessing, and your domain intuition shows up in the product. The arc is also more legible to a judge than the lab one: twelve statements, no idea where the money went, a £40k car, 34 months, drag the sliders, 19 months. "34 → 19 as you drag" is a stronger closing beat than a trend line.
+You have twelve months of real statements — so you build against reality instead of guessing, and your domain intuition shows up in the product. The arc is also more legible to a judge than the lab one: twelve statements, no idea where the money went, a $40k car, 34 months, drag the sliders, 19 months. "34 → 19 as you drag" is a stronger closing beat than a trend line.
 
 **Your real data is a build asset but a video liability.** Develop against it; ship anonymised fixtures. See §19.
 
@@ -55,7 +57,7 @@ This symmetry *is* the architecture claim. Stages 2, 4 and 5 are shared core; th
 | **1 Extract** | transactions from statement PDFs | results from report PDFs |
 | **2 Canonicalise** | `AMZN MKTP US*2K4` → Amazon → Shopping | `Glycated Haemoglobin` → HbA1c, mmol/mol → % |
 | **3 Analyse** | category spend, recurring charges, savings rate | trend vs reference band, drift |
-| **4 Plan vs human goal** | £40k car → savings plan | low ferritin → dietary plan |
+| **4 Plan vs human goal** | $40k car → savings plan | low ferritin → dietary plan |
 | **5 Persist** | goal + plan + exclusions survive the session | same |
 
 `propose_mapping` (stage 2) and `propose_*_plan` (stage 4) are one abstraction each, serving both plugins. Say so in the write-up — it's evidence, not assertion.
@@ -232,7 +234,11 @@ Register dynamically: core at load, plugin tools on mode selection, document-sha
 | `plot_spend_by_category` | attention | stacked area over time |
 | `plot_cashflow` | attention | income vs expense + savings-rate line |
 | `plot_projection` | attention | months-to-goal curve |
+| `get_spend_summary` | read | income, expense, savings rate, top categories — general-purpose answer for open-ended questions |
+| `get_spend_by_category` | read | total spend per category, sorted — for clustering/breakdown questions |
+| `get_monthly_cashflow` | read | net cashflow per month |
 | `propose_savings_plan` | staged | renders the slider surface — see §8 |
+| `propose_repayment_plan` | staged | debt goal: balance, interest rate (APR), freed-up payment — renders the same slider surface |
 
 ### Labs plugin
 
@@ -246,7 +252,7 @@ Register dynamically: core at load, plugin tools on mode selection, document-sha
 
 **~24 tools; only 6 can mutate anything, none without a click.** Put that sentence in the README and the write-up.
 
-**Status footer on every return:** `[3 proposals pending · 12 categories · 2 grants · goal: car £40k]`
+**Status footer on every return:** `[3 proposals pending · 12 categories · 2 grants · goal: car $40k]`
 
 ---
 
@@ -270,25 +276,27 @@ Twelve months of statements, and you genuinely don't know where the money went.
 | 11 | Page | Commits — 1,847 transactions, each with `{doc, page, anchor}` |
 | 12 | Agent | `propose_mapping` — **rules, not rows**: `merchant ILIKE '%amzn%'` → Amazon → Shopping |
 | 13 | Human | Approving one card classifies 200 transactions. Rejects one: *"some of that is groceries"* |
-| 14 | Agent | Splits by basket size (<£40 → Groceries), re-proposes. Human accepts |
+| 14 | Agent | Splits by basket size (<$40 → Groceries), re-proposes. Human accepts |
 | 15 | Agent | `find_recurring` → 14 repeating charges, **including 3 the human forgot they were paying for** |
 | 16 | Agent | `plot_spend_by_category` (stacked area), `plot_cashflow` (income vs expense + savings-rate line) |
 | 17 | Page | Flags month-over-month drift and one-off spikes |
-| 18 | Human | Sets a goal in the picker: **Car, £40,000**, current savings £6,200 |
-| 19 | Page | Computes from real data: surplus £1,180/mo → **34 months** |
-| 20 | Agent | `get_goal` → `propose_savings_plan` with per-category adjustments and rationales drawn from the transactions |
-| 21 | Page | Renders **one slider per adjustment**, pre-set to the proposal, projection chart above |
+| 18 | Human | Picks a goal kind — **savings** or **loan repayment** — and sets it: e.g. **Car, $40,000**, current savings $6,200; or a loan with outstanding balance $12,000 and an interest rate (APR) |
+| 19 | Page | Computes from real data: surplus $1,180/mo → **34 months** (savings), or balance/rate/payment → months to pay off (debt) |
+| 20 | Agent | `get_goal` → `propose_savings_plan` (or `propose_repayment_plan` for a debt goal) with per-category adjustments and rationales drawn from the transactions |
+| 21 | Page | Renders **one slider per adjustment**, plus sliders for target, current balance, and rate (return or interest), pre-set to the proposal, projection chart above |
 | 22 | Human | Drags. Projection recomputes in local JS, instantly. **34 months → 19** |
 | 23 | Human | Sets dining to 340 not 250, accepts subscriptions, notes *"not cutting the gym"* |
 | 24 | Agent | `get_review_status` → revises the rest around the real constraints |
+
+Note: steps 18–24 aren't a fixed script — the human's agent can just as well be asked something open-ended ("where did my money go this quarter?", "cluster my spending", "what would it take to pay off the loan in two years?") and answer it from `get_spend_summary` / `get_spend_by_category` / `get_monthly_cashflow` / `find_recurring`, rendering the result back on the page rather than walking a scripted flow.
 | 25 | Human | Reloads, opens a **fresh chat**. Agent calls `get_plan` + `get_goal`, resumes with full history |
 | 26 | Human | Audit log: every disclosure, every denial, zero bytes uploaded |
 | 27 | Human | Exports categorised CSV |
 
 ### Financial-advice guardrail (non-negotiable)
 
-- The page computes **arithmetic only**: at £X/month you reach £40k in N months.
-- Any assumed return rate is a **slider the human sets**, showing sensitivity rather than a prediction.
+- The page computes **arithmetic only**: at $X/month you reach $40k in N months, or pay off a $12k balance in M months at a given rate.
+- Any assumed return rate or interest rate is a **slider the human sets**, showing sensitivity rather than a prediction.
 - The agent proposes **spending adjustments derived from the user's own transactions** — never products, allocations, or instruments.
 - **No tool exists** that recommends a financial product.
 - Visible line: *Projections are arithmetic on your own data, not financial advice.*
@@ -312,6 +320,8 @@ propose_savings_plan({
 ```
 
 The page renders a slider per adjustment, pre-positioned at the agent's proposal, projection chart above. **Recompute locally in JS on drag — never a round trip to the agent**, or the feel dies.
+
+The goal itself is also a slider surface, not just the adjustments: **target, current balance, and rate** are all range sliders. For a savings goal, rate is an assumed annual return the human sets (sensitivity, not a prediction — see the guardrail). For a debt goal, the same three sliders become **payoff target (usually $0), outstanding balance, and interest rate (APR)** — `propose_repayment_plan` stages the debt-shaped version of the same `{goal, adjustments}` payload, and the projection curve shows the balance paying down to zero instead of growing toward a target.
 
 `get_review_status` returns what the human actually settled on, including per-category deltas and free-text notes. Binary accept/reject becomes **continuous** approval — same primitive, richer surface.
 
@@ -402,7 +412,7 @@ Riskiest unknowns first. Do not write a feature until these pass.
 - [ ] Deploy empty page to Cloudflare Pages
 - [ ] Register a trivial `ping` tool; confirm an agent can call it in **ChatGPT's in-app browser AND Chrome with WebMCP enabled**. Highest-risk item in the project
 - [ ] Verify OPFS works in the in-app browser; if not, switch to IndexedDB **today**
-- [ ] Generate 12 finance fixtures from your real statements: **anonymise merchant names, scale amounts by a constant, replace account details**. Plant deliberately: one statement with the table split across a page break; a "Balance brought forward" line that mimics a transaction; three variant spellings of one merchant; **one decimal error (£54.00 vs £5.40)**
+- [ ] Generate 12 finance fixtures from your real statements: **anonymise merchant names, scale amounts by a constant, replace account details**. Plant deliberately: one statement with the table split across a page break; a "Balance brought forward" line that mimics a transaction; three variant spellings of one merchant; **one decimal error ($54.00 vs $5.40)**
 - [ ] `fixtures/GENERATOR.md` documenting what's planted — judges reading it see deliberate test design
 
 **GATE 0:** a tool call succeeds from an agent in both environments, and storage works.
@@ -495,7 +505,7 @@ Goal, sliders, memory, polish.
 | 0:58–1:25 | Extraction → split screen → hover-to-source → reject the brought-forward row → agent adapts. **Reconciliation passes on all 12** | Verified extraction, page checks the agent |
 | 1:25–1:50 | Category **rules**: one approval classifies 200 rows; reject "some is groceries" → agent splits by basket size | Human authorizes rules, not rows |
 | 1:50–2:10 | Charts. **The absurd point. Click → source page → reject → agent corrects.** `find_recurring` surfaces 3 forgotten subscriptions | Charts as a second review surface |
-| 2:10–2:40 | Goal: £40k car → 34 months → plan drafts → **drag the sliders → 19 months** → notes "not cutting the gym" → agent revises | Continuous, human-authorized planning |
+| 2:10–2:40 | Goal: $40k car → 34 months → plan drafts → **drag the sliders → 19 months** → notes "not cutting the gym" → agent revises | Continuous, human-authorized planning |
 | 2:40–2:52 | **Reload. Fresh chat.** Agent calls `get_plan`, resumes with full history | The page is the agent's memory |
 | 2:52–3:00 | Audit log: *"47 calls · 12 authorized · 3 denied · 0 bytes uploaded"* + a glance at `registerTool` | The receipt |
 
@@ -653,7 +663,7 @@ Present on every route:
 │  Try saying to your agent…                                   │
 │  › "Extract the transactions from all my statements"         │
 │  › "Categorise my spending and show me where it went"        │
-│  › "I want to save £40,000 for a car — how long?"            │
+│  › "I want to save $40,000 for a car — how long?"            │
 │                            [Copy]                            │
 │                                                              │
 │  Nothing uploaded · Open your network panel and watch        │
@@ -781,7 +791,7 @@ You are building against twelve months of your own statements. The repo and the 
 | Transaction table split across a page break | Agent-as-parser beats a naive parser |
 | A `Balance brought forward` line that mimics a transaction | The reject → readback → adapt loop |
 | Three variant spellings of one merchant | `propose_mapping` earning its place |
-| **One decimal error (£54.00 vs £5.40)** | Charts as a second review surface |
+| **One decimal error ($54.00 vs $5.40)** | Charts as a second review surface |
 | One statement with a slightly different column order | Robustness |
 | For labs: HbA1c in mmol/mol on one report, % on two others; one analyte with no printed range | Unit harmonisation; range fallback |
 

@@ -27,7 +27,7 @@ Plugins provide: redaction rules, record schema, validation, canonicalisation, v
 ## Storage
 
 - `docs/<id>.pdf` — raw bytes, never leaves the device.
-- `pages/<id>/<n>.json` — text layer + positions.
+- `pages/<id>/<n>.json` — text layer + positions. Scanned pages (no embedded text) fall back to in-browser OCR (tesseract.js, assets vendored in `public/tesseract/`), which synthesises the same span shape from word bounding boxes.
 - `commits.jsonl` — append-only accepted records.
 - `mappings.jsonl` — approved canonicalisation rules.
 - `grants.json` — persisted "always" grants.

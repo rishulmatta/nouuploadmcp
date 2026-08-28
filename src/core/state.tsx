@@ -21,8 +21,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [documents, setDocuments] = useState<DocumentMeta[]>([])
 
   const refreshDocuments = useCallback(async () => {
-    setDocuments(await listDocuments())
-  }, [])
+    setDocuments(plugin ? await listDocuments(plugin) : [])
+  }, [plugin])
 
   useEffect(() => {
     refreshDocuments()
@@ -37,11 +37,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [plugin])
 
   const loadDocument = useCallback(async (name: string, bytes: Uint8Array) => {
+    if (!plugin) throw new Error('No document set selected — pick a plugin before loading a document.')
     const id = `doc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    const meta = await saveDocument(id, name, bytes)
+    const meta = await saveDocument(id, name, bytes, plugin)
     await refreshDocuments()
     return meta
-  }, [refreshDocuments])
+  }, [plugin, refreshDocuments])
 
   return (
     <AppContext.Provider value={{ plugin, setPlugin, documents, loadDocument, refreshDocuments }}>

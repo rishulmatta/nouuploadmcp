@@ -1,4 +1,4 @@
-import { Routes, Route, Link } from 'react-router-dom'
+import { Routes, Route, Link, useNavigate } from 'react-router-dom'
 import Home from './pages/Home'
 import Workspace from './pages/Workspace'
 import Audit from './pages/Audit'
@@ -7,18 +7,33 @@ import Tools from './pages/Tools'
 import HowItWorks from './pages/HowItWorks'
 import Disclosures from './pages/Disclosures'
 import AgentStatusPill from './ui/AgentStatusPill'
+import StatusFooter from './ui/StatusFooter'
 import ConsentCard from './ui/ConsentCard'
 import { useRegisterTools } from './core/mcp'
-import { coreTools } from './core/mcp/coreTools'
+import { buildCoreTools } from './core/mcp/coreTools'
 import { buildDocumentTools } from './core/mcp/documentTools'
 import { financeTools } from './plugins/finance/tools'
+import { labsTools } from './plugins/labs/tools'
 import { useAppState } from './core/state'
 import { useMemo } from 'react'
 
 function App() {
-  const { plugin } = useAppState()
+  const { plugin, setPlugin } = useAppState()
+  const navigate = useNavigate()
+  const coreTools = useMemo(
+    () =>
+      buildCoreTools((p) => {
+        setPlugin(p)
+        navigate(`/${p}`)
+      }),
+    [setPlugin, navigate],
+  )
   const documentTools = useMemo(() => buildDocumentTools(plugin), [plugin])
-  const pluginTools = useMemo(() => (plugin === 'finance' ? financeTools : []), [plugin])
+  const pluginTools = useMemo(() => {
+    if (plugin === 'finance') return financeTools
+    if (plugin === 'labs') return labsTools
+    return []
+  }, [plugin])
   useRegisterTools(coreTools)
   useRegisterTools(documentTools)
   useRegisterTools(pluginTools)
@@ -27,7 +42,10 @@ function App() {
       <header className="chrome">
         <div className="container row" style={{ justifyContent: 'space-between' }}>
           <Link to="/" className="wordmark">No Upload</Link>
-          <AgentStatusPill />
+          <div className="row" style={{ gap: '0.75rem' }}>
+            <StatusFooter />
+            <AgentStatusPill />
+          </div>
         </div>
       </header>
       <main>

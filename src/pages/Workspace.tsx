@@ -1,19 +1,15 @@
 import { useParams } from 'react-router-dom'
 import { useAppState } from '../core/state'
 import { useEffect, useState } from 'react'
-import { registry } from '../core/mcp'
-import ReviewPanel from '../plugins/finance/ReviewPanel'
-import ChartsPanel from '../plugins/finance/ChartsPanel'
-import GoalPanel from '../plugins/finance/GoalPanel'
-
-const FIXTURE_BASE = '/fixtures/finance/'
+import StepCard from '../ui/StepCard'
+import FinanceFlow from '../plugins/finance/FinanceFlow'
+import LabsFlow from '../plugins/labs/LabsFlow'
 
 export default function Workspace() {
   const { plugin } = useParams<{ plugin: string }>()
   const { documents, loadDocument, setPlugin } = useAppState()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
-  const [reviewing, setReviewing] = useState(false)
 
   useEffect(() => {
     if (plugin === 'finance' || plugin === 'labs') {
@@ -38,42 +34,19 @@ export default function Workspace() {
     }
   }
 
-  const loadSamples = async () => {
-    if (plugin !== 'finance') return
-    setLoading(true)
-    try {
-      const months = [
-        '2025-09', '2025-10', '2025-11', '2025-12',
-        '2026-01', '2026-02', '2026-03', '2026-04',
-        '2026-05', '2026-06', '2026-07', '2026-08',
-      ]
-      for (const m of months) {
-        const res = await fetch(`${FIXTURE_BASE}statement-${m}.pdf`)
-        const bytes = new Uint8Array(await res.arrayBuffer())
-        await loadDocument(`statement-${m}.pdf`, bytes)
-      }
-      setMessage('Loaded 12 sample statements.')
-    } catch (err) {
-      setMessage(String(err))
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return (
     <div className="container col">
       <h1>{plugin === 'finance' ? 'Financial statements' : plugin === 'labs' ? 'Blood test reports' : 'Workspace'}</h1>
-      <div className="card col">
-        <p>Drop PDFs here or load samples. Files are stored locally in your browser.</p>
+
+      <StepCard
+        n={1}
+        title={plugin === 'labs' ? 'Upload your lab reports' : 'Upload your statements'}
+        subtitle={plugin === 'labs' ? '2–3 reports is plenty — they stay in this browser tab, nothing is uploaded' : 'Stays in this browser tab, nothing is uploaded'}
+      >
         <div className="row">
           <input type="file" multiple accept=".pdf,application/pdf" onChange={onFileChange} disabled={loading} />
-          {plugin === 'finance' && <button onClick={loadSamples} disabled={loading}>Load samples</button>}
         </div>
         {message && <p className="pill">{message}</p>}
-      </div>
-
-      <div className="card">
-        <h3>Loaded documents</h3>
         {documents.length === 0 ? (
           <p className="muted">No documents yet.</p>
         ) : (
@@ -85,29 +58,10 @@ export default function Workspace() {
             ))}
           </ul>
         )}
-      </div>
+      </StepCard>
 
-      {plugin === 'finance' && documents.length > 0 && (
-        <div className="card row">
-          <button onClick={async () => {
-            setLoading(true)
-            try {
-              const result = await registry.invoke('propose_transactions', { doc: 'all' })
-              setMessage(`Proposed ${(result as {proposed: number}).proposed} transactions.`)
-              setReviewing(true)
-            } catch (e) {
-              setMessage(String(e))
-            } finally {
-              setLoading(false)
-            }
-          }} disabled={loading}>Extract transactions</button>
-          <button onClick={() => setReviewing(!reviewing)}>{reviewing ? 'Hide review' : 'Review proposals'}</button>
-        </div>
-      )}
-
-      {plugin === 'finance' && reviewing && <ReviewPanel />}
-      {plugin === 'finance' && <ChartsPanel />}
-      {plugin === 'finance' && <GoalPanel />}
+      {plugin === 'finance' && <FinanceFlow documents={documents} />}
+      {plugin === 'labs' && <LabsFlow documents={documents} />}
     </div>
   )
 }

@@ -7,6 +7,7 @@ export interface DocumentMeta {
   size: number
   pageCount: number
   createdAt: number
+  plugin: string // which document set this belongs to, e.g. "finance" or "labs" — never cross-listed with another
 }
 
 const DOC_DIR = 'docs'
@@ -35,7 +36,17 @@ async function readJson<T>(path: string): Promise<T | undefined> {
   }
 }
 
-export async function saveDocument(id: string, name: string, bytes: Uint8Array): Promise<DocumentMeta> {
+export async function saveDocument(id: string, name: string, bytes: Uint8Array, plugin: string): Promise<DocumentMeta> {
+  const existing = await listDocuments(plugin)
+  const duplicates = existing.filter((d) => d.name === name)
+  for (const dup of duplicates) {
+    await deleteDocument(dup.id)
+  }
+
+  // pdf.js transfers bytes.buffer to its worker to parse, which detaches it —
+  // bytes.length reads back as 0 after that. Capture the size first.
+  const size = bytes.length
+
   const storage = await getStorage()
   await storage.writeFile(docPath(id), bytes)
 
@@ -47,12 +58,30 @@ export async function saveDocument(id: string, name: string, bytes: Uint8Array):
   const meta: DocumentMeta = {
     id,
     name,
-    size: bytes.length,
+    size,
     pageCount: parsed.pageCount,
     createdAt: Date.now(),
+    plugin,
   }
   await appendDocumentMeta(meta)
   return meta
+}
+
+export async function deleteDocument(id: string): Promise<void> {
+  const storage = await getStorage()
+  await storage.deleteFile(docPath(id)).catch(() => {})
+  const pages = await storage.listFiles(`${PAGE_DIR}/${id}`).catch(() => [])
+  for (const page of pages) {
+    await storage.deleteFile(pagePath(id, Number(page.replace('.json', '')))).catch(() => {})
+  }
+  await removeDocumentMeta(id)
+}
+
+async function removeDocumentMeta(id: string) {
+  const storage = await getStorage()
+  const lines = await storage.readLines('meta.jsonl')
+  const kept = lines.filter((l) => (JSON.parse(l) as DocumentMeta).id !== id)
+  await storage.writeFile('meta.jsonl', kept.length ? kept.join('\n') + '\n' : '')
 }
 
 export async function loadDocumentBytes(id: string): Promise<Uint8Array> {
@@ -64,14 +93,19 @@ export async function loadParsedPage(id: string, page: number): Promise<ParsedDo
   return readJson(pagePath(id, page))
 }
 
-export async function listDocuments(): Promise<DocumentMeta[]> {
+export async function listDocuments(plugin?: string): Promise<DocumentMeta[]> {
   try {
     const storage = await getStorage()
     const lines = await storage.readLines('meta.jsonl')
-    return lines.map((l) => JSON.parse(l) as DocumentMeta)
+    const docs = lines.map((l) => JSON.parse(l) as DocumentMeta)
+    return plugin ? docs.filter((d) => d.plugin === plugin) : docs
   } catch {
     return []
   }
+}
+
+export async function getDocument(id: string): Promise<DocumentMeta | undefined> {
+  return (await listDocuments()).find((d) => d.id === id)
 }
 
 async function appendDocumentMeta(meta: DocumentMeta) {

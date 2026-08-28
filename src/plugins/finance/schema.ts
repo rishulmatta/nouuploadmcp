@@ -7,6 +7,7 @@ export interface Transaction {
   description: string
   amount: number // negative for debit, positive for credit
   balance?: number
+  currency?: string // symbol as printed on the statement, e.g. "$", "£", "€"
 }
 
 export interface TransactionProposal {
@@ -17,6 +18,7 @@ export interface TransactionProposal {
   description: string
   amount: number
   balance?: number
+  currency?: string
 }
 
 export interface CategoryMapping {
@@ -25,16 +27,6 @@ export interface CategoryMapping {
   merchant: string
   category: string
   matchCount: number
-}
-
-export interface SavingsPlan {
-  goal: { label: string; target: number; current: number }
-  adjustments: {
-    category: string
-    currentMonthly: number
-    targetMonthly: number
-    rationale: string
-  }[]
 }
 
 export function txKey(tx: { doc: string; page: number; anchor: number }) {

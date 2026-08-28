@@ -38,16 +38,20 @@ class Registry {
 
   constructor() {
     if (typeof window !== 'undefined') {
-      // Re-sync if modelContext appears after initial load
+      // Re-sync if modelContext appears after initial load. A host can inject
+      // it well after the page loads (extension activation, switching into an
+      // agent-enabled browser, joining a ChatGPT session later) — this page is
+      // meant to sit open through an arbitrarily long human+agent session, so
+      // this must never give up polling, or a late-arriving agent silently
+      // never gets any tools registered and can never actually connect.
       const check = () => {
         if (getModelContext() && !this.synced) {
           this.syncAll()
         }
       }
-      const id = setInterval(check, 1000)
+      setInterval(check, 1000)
       window.addEventListener('focus', check)
-      // stop polling after 60s
-      setTimeout(() => clearInterval(id), 60000)
+      document.addEventListener('visibilitychange', check)
     }
   }
 
@@ -101,7 +105,8 @@ class Registry {
   async invoke(name: string, args: Record<string, unknown>): Promise<unknown> {
     const tool = this.tools.get(name)
     if (!tool) {
-      throw new Error(`Tool not found: ${name}`)
+      const available = Array.from(this.tools.keys()).join(', ')
+      throw new Error(`Tool not found: ${name}. Available tools: ${available}. If ${name} belongs to a plugin, call select_plugin first.`)
     }
     const start = performance.now()
     const result = await tool.handler(args)

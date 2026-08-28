@@ -1,10 +1,23 @@
-import type { Transaction } from './schema'
+import { listApprovedMappings } from '../../core/storage/mappings'
+import type { Transaction, CategoryMapping } from './schema'
 
 export interface CategoryRule {
   id: string
   pattern: string
   category: string
   merchant: string
+}
+
+// Rules the agent proposed and a human approved (propose_mapping), consulted
+// before the generic defaults below since they're specific to this user's own
+// transaction descriptions. Applied at read time only — never rewrites a stored
+// transaction's description or category.
+let approvedRules: CategoryRule[] = []
+
+export async function loadApprovedMappings(): Promise<CategoryRule[]> {
+  const approved = await listApprovedMappings()
+  approvedRules = approved.map((m: CategoryMapping) => ({ id: m.id, pattern: m.pattern, category: m.category, merchant: m.merchant }))
+  return approvedRules
 }
 
 export const defaultCategoryRules: CategoryRule[] = [
@@ -25,9 +38,10 @@ export const defaultCategoryRules: CategoryRule[] = [
   { id: 'r15', pattern: 'toolkit', category: 'Subscriptions', merchant: 'Premium Toolkit' },
 ]
 
-export function categorize(description: string, rules: CategoryRule[] = defaultCategoryRules): { category: string; merchant: string } {
+export function categorize(description: string, rules?: CategoryRule[]): { category: string; merchant: string } {
   const lower = description.toLowerCase()
-  for (const rule of rules) {
+  const activeRules = rules ?? [...approvedRules, ...defaultCategoryRules]
+  for (const rule of activeRules) {
     if (lower.includes(rule.pattern)) {
       return { category: rule.category, merchant: rule.merchant }
     }

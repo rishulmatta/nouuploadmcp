@@ -1,7 +1,8 @@
 import type { ToolSpec } from './types'
 import { listAudit } from '../storage/audit'
 
-export const coreTools: ToolSpec[] = [
+export function buildCoreTools(selectPlugin: (plugin: 'finance' | 'labs') => void): ToolSpec[] {
+  return [
   {
     name: 'ping',
     description: 'A trivial tool to confirm the page is reachable by the agent.',
@@ -33,8 +34,12 @@ export const coreTools: ToolSpec[] = [
     ],
     tier: 'attention',
     handler: ({ plugin }) => {
-      // TODO: wire to app state
-      return { selected: plugin }
+      const p = String(plugin)
+      if (p !== 'finance' && p !== 'labs') {
+        throw new Error(`Unknown plugin: ${p}. Available: finance, labs`)
+      }
+      selectPlugin(p)
+      return { selected: p }
     },
   },
   {
@@ -47,4 +52,5 @@ export const coreTools: ToolSpec[] = [
       return { entries }
     },
   },
-]
+  ]
+}

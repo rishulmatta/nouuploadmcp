@@ -1,5 +1,5 @@
 import type { ToolSpec } from './types'
-import { listDocuments, loadParsedPage } from '../storage/documents'
+import { listDocuments, loadParsedPage, getDocument } from '../storage/documents'
 import { scanRedactions, redactText, applyRedactions } from '../redact/engine'
 import { financeRedactionRules, labsRedactionRules } from '../redact/patterns'
 import { getPolicy } from '../consent/policy'
@@ -18,11 +18,11 @@ export function buildDocumentTools(plugin: string | null): ToolSpec[] {
   return [
     {
       name: 'list_documents',
-      description: 'List loaded documents with metadata only.',
+      description: 'List documents loaded into the active document set (plugin) only — never documents from another plugin.',
       parameters: [],
       tier: 'read',
       handler: async () => {
-        const docs = await listDocuments()
+        const docs = plugin ? await listDocuments(plugin) : []
         return docs.map((d) => ({ id: d.id, name: d.name, pages: d.pageCount }))
       },
     },
@@ -50,6 +50,10 @@ export function buildDocumentTools(plugin: string | null): ToolSpec[] {
       ],
       tier: 'consent',
       handler: async ({ doc, page, reason }) => {
+        const meta = await getDocument(String(doc))
+        if (!meta || meta.plugin !== plugin) {
+          throw new Error(`Document ${doc} is not part of the active document set (${plugin ?? 'none selected'}). Call list_documents first.`)
+        }
         const parsed = await loadParsedPage(String(doc), Number(page))
         if (!parsed) {
           throw new Error(`Page ${page} not found on document ${doc}`)

@@ -16,7 +16,7 @@ async function getPath(
 ): Promise<FileSystemFileHandle | FileSystemDirectoryHandle | undefined> {
   const parts = path.split('/').filter(Boolean)
   let dir = root
-  for (let i = 0; i < parts.length - (create || path.endsWith('/') ? 0 : 1); i++) {
+  for (let i = 0; i < parts.length - (path.endsWith('/') ? 0 : 1); i++) {
     dir = await dir.getDirectoryHandle(parts[i], { create })
   }
   if (path.endsWith('/')) return dir
