@@ -9,6 +9,7 @@ import Disclosures from './pages/Disclosures'
 import AgentStatusPill from './ui/AgentStatusPill'
 import StatusFooter from './ui/StatusFooter'
 import ConsentCard from './ui/ConsentCard'
+import Seo from './ui/Seo'
 import { useRegisterTools } from './core/mcp'
 import { buildCoreTools } from './core/mcp/coreTools'
 import { buildDocumentTools } from './core/mcp/documentTools'
@@ -39,6 +40,7 @@ function App() {
   useRegisterTools(pluginTools)
   return (
     <div className="app">
+      <Seo />
       <header className="chrome">
         <div className="container row" style={{ justifyContent: 'space-between' }}>
           <Link to="/" className="wordmark">No Upload</Link>

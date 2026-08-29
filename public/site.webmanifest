@@ -1,0 +1,16 @@
+{
+  "name": "No Upload",
+  "short_name": "No Upload",
+  "description": "Private PDF analysis with local AI agent workflows.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0c09",
+  "theme_color": "#0b0c09",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
