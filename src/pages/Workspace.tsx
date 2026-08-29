@@ -7,7 +7,7 @@ import LabsFlow from '../plugins/labs/LabsFlow'
 
 export default function Workspace() {
   const { plugin } = useParams<{ plugin: string }>()
-  const { documents, loadDocument, setPlugin } = useAppState()
+  const { documents, loadDocument, removeDocument, setPlugin } = useAppState()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -31,6 +31,7 @@ export default function Workspace() {
       setMessage(String(err))
     } finally {
       setLoading(false)
+      e.target.value = ''
     }
   }
 
@@ -52,8 +53,13 @@ export default function Workspace() {
         ) : (
           <ul>
             {documents.map((d) => (
-              <li key={d.id}>
-                {d.name} · {d.pageCount} page{d.pageCount === 1 ? '' : 's'} · {(d.size / 1024).toFixed(1)} KB
+              <li key={d.id} className="row" style={{ justifyContent: 'space-between' }}>
+                <span>
+                  {d.name} · {d.pageCount} page{d.pageCount === 1 ? '' : 's'} · {(d.size / 1024).toFixed(1)} KB
+                </span>
+                <button className="ghost" onClick={() => removeDocument(d.id)} disabled={loading}>
+                  Remove
+                </button>
               </li>
             ))}
           </ul>

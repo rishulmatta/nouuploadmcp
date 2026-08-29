@@ -32,6 +32,13 @@ export function getCategoryChartSnapshot(): CategorySnapshot | null {
   return snapshot
 }
 
+/** A rendered category chart is a snapshot of the active transaction set. */
+export function invalidateCategoryChart() {
+  if (snapshot === null) return
+  snapshot = null
+  notify()
+}
+
 export async function renderSpendByCategory(): Promise<CategorySnapshot> {
   await loadApprovedMappings()
   const commits = await listCommits()

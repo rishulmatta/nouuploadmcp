@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useAgentDetected } from '../core/mcp'
 
 const STARTER_PROMPTS = [
   'Extract the transactions from all my statements',
@@ -7,81 +8,94 @@ const STARTER_PROMPTS = [
   'Is this plan feasible given my real spending?',
 ]
 
+const HOW_IT_WORKS = [
+  'Load PDFs — stays in this tab',
+  'Connect an agent to this page',
+  'Ask in chat, review on screen',
+  'Nothing saves until you approve',
+]
+
 const FINANCE_STEPS = [
-  'Upload statements — they stay in this tab',
-  'Pick which transactions to accept',
-  'A monthly spend chart appears automatically',
-  'Ask the agent to categorise spending — get a pie chart',
-  'Ask for a savings plan, tune it with sliders',
-  'Ask "is this feasible?" — get a yes/no, backed by your real numbers',
+  'Upload statements, accept transactions',
+  'Spend chart + category breakdown',
+  'Draft a savings plan, tune with sliders',
+  'Ask "is this feasible?" for a real answer',
 ]
 
 const LABS_STEPS = [
   'Upload 2–3 lab reports',
   'Trends plot automatically',
-  'Ask what you\'re deficient in, and what diet would help',
-  'Amend the plan yourself, or ask the agent to revise it',
-  'Ask for a final review — flags anything off-plan',
+  'Ask what\'s off, and what diet would help',
+  'Ask for a final review before you commit',
 ]
 
 export default function Home() {
+  const agentDetected = useAgentDetected()
   const copy = () => {
     navigator.clipboard.writeText(STARTER_PROMPTS.join('\n'))
   }
 
   return (
-    <div className="container col" style={{ gap: '1.5rem' }}>
+    <div className="container col" style={{ gap: '1.75rem' }}>
+      {!agentDetected && (
+        <div className="banner">
+          <span>→</span>
+          <span>No agent connected. Open this page inside <strong>Claude</strong>, <strong>Codex</strong>, or another WebMCP-enabled agent to drive it by chat.</span>
+        </div>
+      )}
+
       <section className="hero">
-        <h1>Let an agent read your private documents without uploading them.</h1>
-        <p className="sub">Your PDFs stay in this browser tab. You choose what the agent is allowed to see, one request at a time.</p>
+        <p className="eyebrow">Local-only · Zero upload</p>
+        <h1>Let an agent read your documents.<br /><em>Without ever uploading them.</em></h1>
+        <p className="sub">Your PDFs stay in this browser tab. You approve exactly what the agent sees, one request at a time.</p>
       </section>
 
-      <section className="card col">
-        <h3>This page isn't clicked through — it's driven by an agent</h3>
-        <p>Open this page, then point an agent (Codex, ChatGPT, Claude — anything that supports WebMCP) at this tab and talk to it in plain language. The page registers tools the agent can call directly against whatever's loaded here; nothing goes to a server. Your job is upload, then approve or reject what the agent proposes.</p>
-        <ol>
-          <li>Load your PDFs here — stored in this tab only, never uploaded</li>
-          <li>Connect an agent to this page (see below)</li>
-          <li>Ask it things in chat — it calls tools, you see the result on screen</li>
-          <li>Nothing is saved until you click Accept or Approve</li>
-        </ol>
-        <div className="video-placeholder">Demo video coming soon</div>
+      <section className="card">
+        <h3 className="mt-0" style={{ marginTop: 0 }}>Driven by an agent, not clicks</h3>
+        <div className="row" style={{ flexWrap: 'wrap', gap: '1.25rem', marginTop: '0.75rem' }}>
+          {HOW_IT_WORKS.map((s, i) => (
+            <div key={s} className="row" style={{ gap: '0.6rem', flex: '1 1 200px', alignItems: 'flex-start' }}>
+              <span className="step-badge" style={{ width: '1.5rem', height: '1.5rem', fontSize: '0.8rem' }}>{i + 1}</span>
+              <span style={{ fontSize: '0.9rem' }}>{s}</span>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="tiles row" style={{ alignItems: 'stretch' }}>
-        <div className="card col" style={{ flex: 1 }}>
+        <div className="card col tile" style={{ flex: 1 }}>
           <div className="row" style={{ justifyContent: 'space-between' }}>
-            <h2>Financial statements</h2>
+            <h2 style={{ margin: 0 }}>Financial statements</h2>
             <span className="pill">Start here</span>
           </div>
-          <p>Turn months of bank PDFs into categorised spending, a savings plan, and a live feasibility check.</p>
-          <ol style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
+          <p style={{ color: 'var(--muted)', margin: 0 }}>Bank PDFs → categorised spending, a savings plan, and a feasibility check.</p>
+          <ul style={{ fontSize: '0.88rem', color: 'var(--muted)', margin: 0, paddingLeft: '1.1rem' }}>
             {FINANCE_STEPS.map((s) => <li key={s}>{s}</li>)}
-          </ol>
+          </ul>
           <Link to="/finance"><button className="primary">Start</button></Link>
         </div>
 
-        <div className="card col" style={{ flex: 1 }}>
-          <h2>Blood test reports</h2>
-          <p>Turn years of lab PDFs into a verified timeline, a diet plan for what's off, and a final adherence check.</p>
-          <ol style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
+        <div className="card col tile" style={{ flex: 1 }}>
+          <h2 style={{ margin: 0 }}>Blood test reports</h2>
+          <p style={{ color: 'var(--muted)', margin: 0 }}>Lab PDFs → a verified timeline, a diet plan, and an adherence check.</p>
+          <ul style={{ fontSize: '0.88rem', color: 'var(--muted)', margin: 0, paddingLeft: '1.1rem' }}>
             {LABS_STEPS.map((s) => <li key={s}>{s}</li>)}
-          </ol>
+          </ul>
           <Link to="/labs"><button className="primary">Start</button></Link>
         </div>
       </section>
 
       <section className="card">
-        <h3>Try saying to your agent…</h3>
-        <ul>
+        <h3 style={{ marginTop: 0 }}>Try saying to your agent…</h3>
+        <ul style={{ margin: 0 }}>
           {STARTER_PROMPTS.map((p) => (
             <li key={p}>"{p}"</li>
           ))}
         </ul>
-        <button onClick={copy}>Copy prompts</button>
+        <button onClick={copy} className="mt-1">Copy prompts</button>
       </section>
 
-      <p className="privacy-strip">Nothing uploaded. Open your browser's network panel and watch it stay empty.</p>
+      <p className="privacy-strip">0 bytes uploaded — check your network panel and watch it stay empty.</p>
     </div>
   )
 }

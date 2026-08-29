@@ -1,7 +1,7 @@
 import type { ToolSpec } from '../../core/mcp/types'
 import { listDocuments, loadParsedPage } from '../../core/storage/documents'
-import { stageProposal, getProposals, updateProposal } from '../../core/staging/store'
-import { listCommits, replaceCommits } from '../../core/storage/commits'
+import { stageProposal, getProposals, updateProposal, removeProposals } from '../../core/staging/store'
+import { listCommits, replaceCommits, removeCommitsForDocuments } from '../../core/storage/commits'
 import { extractTransactionsFromPage } from './extract'
 import type { Transaction, TransactionProposal, CategoryMapping } from './schema'
 import { txKey } from './schema'
@@ -19,7 +19,7 @@ async function currentPlan(): Promise<Plan | null> {
 }
 import { approveMapping } from '../../core/storage/mappings'
 import { loadApprovedMappings } from './mappings'
-import { renderSpendByCategory } from './chartState'
+import { renderSpendByCategory, invalidateCategoryChart } from './chartState'
 
 function stagePlanProposal(idPrefix: string, goal: Goal, adjustments: Adjustment[]) {
   const plan: Plan = { goal, adjustments }
@@ -39,6 +39,15 @@ export const financeTools: ToolSpec[] = [
     handler: async ({ doc }) => {
       const owned = await listDocuments('finance')
       const docs = doc === 'all' ? owned : owned.filter((d) => d.id === String(doc))
+      const refreshedDocIds = new Set(docs.map((d) => d.id))
+
+      // Extraction starts a fresh review for the requested statements. Their
+      // previous selection must stop contributing to analysis immediately.
+      await removeCommitsForDocuments(refreshedDocIds)
+      removeProposals((proposal) => proposal.type === 'transaction'
+        && refreshedDocIds.has((proposal.payload as TransactionProposal).doc))
+      invalidateCategoryChart()
+
       const proposals: TransactionProposal[] = []
       for (const d of docs) {
         for (let p = 1; p <= d.pageCount; p++) {
@@ -323,7 +332,9 @@ export async function acceptTransactionProposals(ids: string[]) {
   }
   if (newTxs.length === 0) return
   const existing = await listCommits()
-  await replaceCommits([...existing, ...newTxs])
+  const acceptedIds = new Set(newTxs.map((tx) => tx.id))
+  await replaceCommits([...existing.filter((tx) => !acceptedIds.has(tx.id)), ...newTxs])
+  invalidateCategoryChart()
   for (const tx of newTxs) updateProposal(tx.id, { status: 'accepted' })
 }
 

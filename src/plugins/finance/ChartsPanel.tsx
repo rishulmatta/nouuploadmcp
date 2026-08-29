@@ -1,6 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
-import { listCommits } from '../../core/storage/commits'
-import { subscribe } from '../../core/staging/store'
+import { listCommits, subscribeCommits } from '../../core/storage/commits'
 import { groupByMonth } from './analytics'
 import { subscribeCategoryChart, getCategoryChartSnapshot, renderSpendByCategory } from './chartState'
 import type { Transaction } from './schema'
@@ -13,7 +12,7 @@ export function MonthlyCashflowChart() {
   useEffect(() => {
     const load = () => { listCommits().then(setTxs) }
     load()
-    return subscribe(load)
+    return subscribeCommits(load)
   }, [])
 
   if (txs.length === 0) return <p>No committed transactions yet — accept some proposals first.</p>

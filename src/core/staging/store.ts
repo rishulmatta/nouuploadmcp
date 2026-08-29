@@ -66,3 +66,11 @@ export function clearProposals() {
   proposals.length = 0
   notify()
 }
+
+/** Remove staged decisions that no longer belong to the active dataset. */
+export function removeProposals(predicate: (proposal: StagedProposal) => boolean) {
+  const kept = proposals.filter((proposal) => !predicate(proposal))
+  if (kept.length === proposals.length) return
+  proposals.splice(0, proposals.length, ...kept)
+  notify()
+}

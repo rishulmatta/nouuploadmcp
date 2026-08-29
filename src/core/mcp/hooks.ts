@@ -34,3 +34,21 @@ export function useTools() {
   }, [])
   return tools
 }
+
+function getModelContext() {
+  if (typeof window === 'undefined') return undefined
+  return (window as unknown as Record<string, unknown>).modelContext
+    ?? (typeof document !== 'undefined' ? (document as unknown as Record<string, unknown>).modelContext : undefined)
+    ?? (typeof navigator !== 'undefined' ? (navigator as unknown as Record<string, unknown>).modelContext : undefined)
+}
+
+export function useAgentDetected() {
+  const [present, setPresent] = useState(false)
+  useEffect(() => {
+    const check = () => setPresent(getModelContext() !== undefined)
+    check()
+    const id = setInterval(check, 1000)
+    return () => { clearInterval(id) }
+  }, [])
+  return present
+}
