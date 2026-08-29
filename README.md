@@ -38,6 +38,17 @@ No agent tool can silently commit a staged transaction, lab result, mapping, or 
 
 No login, API key, paid account, or special credentials are required for the app. Bundled synthetic PDFs are provided so judges do not need to use personal documents.
 
+### Testing fixtures
+
+All fixtures contain synthetic data and can be downloaded directly from the public repository:
+
+- [Finance statement fixtures](https://github.com/rishulmatta/nouuploadmcp/tree/main/fixtures/finance) - 12 monthly statement PDFs using US dollar (`$`) amounts.
+- [Lab report fixtures](https://github.com/rishulmatta/nouuploadmcp/tree/main/fixtures/labs) - four quarterly blood-test PDFs.
+- [Finance fixture design and deliberate test cases](./fixtures/GENERATOR.md)
+- [Lab fixture design and deliberate test cases](./fixtures/labs/GENERATOR.md)
+
+The deployed app also provides **Load samples**, so downloading these files is optional.
+
 ### Option B: run locally
 
 Prerequisites: Node.js 20 or later and npm.

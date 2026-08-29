@@ -47,7 +47,7 @@ function fmtDate(d: Date) {
 }
 
 function fmtMoney(n: number) {
-  return `£${n.toFixed(2)}`
+  return `$${n.toFixed(2)}`
 }
 
 function randInt(min: number, max: number) {
@@ -117,7 +117,7 @@ function generateMonthTransactions(monthIndex: number, startBalance: number): Tr
       const variants = ['Starbrew Coffee', 'STARBREW COFFEE', 'Starbrew Coffee Ltd', 'STARBREW COFFEE LONDON']
       desc = pick(variants)
     }
-    // Decimal error plant: month 6 (Feb 2026), one Starbrew transaction at £54.00
+    // Decimal error plant: month 6 (Feb 2026), one Starbrew transaction at $54.00
     if (monthIndex === 5 && m.name === 'Starbrew Coffee' && i === 3) {
       txs.push({
         date: new Date(month.getFullYear(), month.getMonth(), day),

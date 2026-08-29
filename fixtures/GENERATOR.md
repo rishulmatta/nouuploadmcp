@@ -17,7 +17,7 @@ The finance fixtures in `fixtures/finance/` are synthetic bank statements produc
 | Transaction table split across a page break | `statement-2025-12.pdf` | Agent-as-parser beats a naive single-page parser. |
 | `Balance brought forward` line that mimics a transaction | First page of every statement | The reject → readback → adapt loop. |
 | Three variant spellings of one merchant | `Starbrew Coffee`, `STARBREW COFFEE`, `Starbrew Coffee Ltd` across statements | `propose_mapping` earning its place. |
-| Decimal error (£54.00 vs ~£5.40) | `statement-2026-02.pdf`, one Starbrew transaction | Charts as a second review surface. |
+| Decimal error ($54.00 vs ~$5.40) | `statement-2026-02.pdf`, one Starbrew transaction | Charts as a second review surface. |
 | Slightly different column order | Meridian Financial (`compact`) layout | Robustness to layout variation. |
 | Recurring charges, including forgotten ones | StreamFlix, FitLab Gym, CloudPower Energy, AudioWave, NewsPlus Digital, CloudSync Pro, Premium Toolkit | `find_recurring` surfacing subscriptions. |
 
@@ -25,9 +25,10 @@ The finance fixtures in `fixtures/finance/` are synthetic bank statements produc
 
 ```bash
 npx tsx scripts/generate-fixtures.ts
+cp fixtures/finance/*.pdf public/fixtures/finance/
 ```
 
-This overwrites the PDFs in `fixtures/finance/`.
+The first command overwrites the PDFs in `fixtures/finance/`. The second keeps the deployed sample copies in `public/fixtures/finance/` in sync.
 
 ## Note
 
