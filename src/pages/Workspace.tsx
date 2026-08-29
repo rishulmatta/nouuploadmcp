@@ -35,6 +35,18 @@ export default function Workspace() {
     }
   }
 
+  const onRemoveDocument = async (id: string) => {
+    setLoading(true)
+    try {
+      await removeDocument(id)
+      setMessage('Document removed. Derived charts and accepted rows were refreshed.')
+    } catch (err) {
+      setMessage(String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="container col">
       <h1>{plugin === 'finance' ? 'Financial statements' : plugin === 'labs' ? 'Blood test reports' : 'Workspace'}</h1>
@@ -57,7 +69,7 @@ export default function Workspace() {
                 <span>
                   {d.name} · {d.pageCount} page{d.pageCount === 1 ? '' : 's'} · {(d.size / 1024).toFixed(1)} KB
                 </span>
-                <button className="ghost" onClick={() => removeDocument(d.id)} disabled={loading}>
+                <button className="ghost" onClick={() => onRemoveDocument(d.id)} disabled={loading}>
                   Remove
                 </button>
               </li>

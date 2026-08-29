@@ -59,7 +59,7 @@ export default function FinanceFlow({ documents }: { documents: DocumentMeta[] }
         n={4}
         title="Categorize spending"
         subtitle="Nothing here updates on its own — ask the agent"
-        prompts={['Categorise my spending and show me a pie chart', "What's still showing as Other?", 'Render the spend by category chart']}
+        prompts={['Categorise my spending and show me a pie chart', 'Regenerate category mappings from my accepted transactions', "What's still showing as Other?", 'Render the spend by category chart']}
       >
         <CategorySpendChart />
       </StepCard>
@@ -68,7 +68,6 @@ export default function FinanceFlow({ documents }: { documents: DocumentMeta[] }
         n="5–7"
         title="Savings plan, sliders & feasibility"
         subtitle="Ask for a plan, tune it below, then check if it's realistic"
-        prompts={['I want to save $40,000 for a car — advise where I can save money and draft a plan', 'Is this plan feasible given my real spending?']}
       >
         <GoalPanel />
       </StepCard>

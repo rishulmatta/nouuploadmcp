@@ -37,3 +37,7 @@ export async function setApprovedMappingEnabled(id: string, enabled: boolean): P
   const existing = await listApprovedMappings()
   await replaceApprovedMappings(existing.map((mapping) => mapping.id === id ? { ...mapping, enabled } : mapping))
 }
+
+export async function clearApprovedMappings(): Promise<void> {
+  await replaceApprovedMappings([])
+}

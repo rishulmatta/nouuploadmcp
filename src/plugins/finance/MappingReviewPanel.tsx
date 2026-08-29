@@ -2,9 +2,9 @@ import { useSyncExternalStore, useMemo, useState, useEffect } from 'react'
 import { getProposals, subscribe } from '../../core/staging/store'
 import { acceptMappingProposal, rejectMappingProposal } from './tools'
 import type { CategoryMapping } from './schema'
-import { listApprovedMappings, setApprovedMappingEnabled, subscribeApprovedMappings } from '../../core/storage/mappings'
+import { clearApprovedMappings, listApprovedMappings, setApprovedMappingEnabled, subscribeApprovedMappings } from '../../core/storage/mappings'
 import { loadApprovedMappings } from './mappings'
-import { renderSpendByCategory } from './chartState'
+import { invalidateCategoryChart, renderSpendByCategory } from './chartState'
 
 // Rendered unconditionally (not behind the "Review proposals" toggle) — the agent
 // can call propose_mapping at any time, independent of transaction review, so the
@@ -73,6 +73,18 @@ export default function MappingReviewPanel() {
     }
   }
 
+  const clearMappings = async () => {
+    if (!window.confirm('Clear all approved category mappings? You can ask the agent to regenerate them from your accepted transactions.')) return
+    setBusy(true)
+    try {
+      await clearApprovedMappings()
+      await loadApprovedMappings()
+      invalidateCategoryChart()
+    } finally {
+      setBusy(false)
+    }
+  }
+
   if (pendingMappings.length === 0 && approvedMappings.length === 0) return null
 
   return (
@@ -117,7 +129,10 @@ export default function MappingReviewPanel() {
       </div>
       </>}
       {approvedMappings.length > 0 && <>
-        <h4 style={{ marginBottom: 0 }}>Approved</h4>
+        <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <h4 style={{ marginBottom: 0 }}>Approved</h4>
+          <button className="ghost" onClick={clearMappings} disabled={busy}>Clear saved mappings</button>
+        </div>
         <div className="col" style={{ maxHeight: 480, overflowY: 'auto' }}>
           {approvedMappings.map((mapping) => (
             <label key={mapping.id} className="row" style={{ alignItems: 'flex-start', borderBottom: '1px solid var(--border)', padding: '0.5rem 0' }}>
@@ -129,6 +144,7 @@ export default function MappingReviewPanel() {
             </label>
           ))}
         </div>
+        <span className="muted">After clearing, ask the agent: “Regenerate category mappings from my accepted transactions.”</span>
       </>}
     </div>
   )

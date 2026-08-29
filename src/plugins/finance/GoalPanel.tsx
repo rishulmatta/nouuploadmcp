@@ -9,6 +9,7 @@ import {
   maxMonthlyContribution, scaleAdjustmentsToTotal,
 } from '../../core/planner/project'
 import type { Transaction } from './schema'
+import { PromptChip } from '../../ui/StepCard'
 
 const BLANK_GOAL = (kind: GoalKind): Goal => ({ kind, label: '', target: 0, current: 0, rate: 0 })
 
@@ -226,9 +227,27 @@ export default function GoalPanel() {
   }
 
   const boundsMax = goal ? Math.max(goal.target, goal.current, 1000) * 2 : 2000
+  const contextualPrompts = pendingPlan
+    ? ['Explain why you recommended these category reductions', 'Revise this proposal with less aggressive savings targets']
+    : goal && adjustments.length > 0
+      ? ['Is this plan feasible given my real spending?', 'Suggest a less aggressive version of this plan']
+      : goal
+        ? ['Advise which spending categories I could save money on for this goal']
+        : rejectedPlan
+          ? []
+          : [
+              'I want to save $40,000 for a car — advise where I can save money and draft a plan',
+              'I have a $500,000 home loan at 6% interest — advise where I can save money and draft a repayment plan',
+            ]
 
   return (
     <div className="col">
+      {contextualPrompts.length > 0 && (
+        <div className="prompt-list col">
+          <span className="muted">Try asking your agent next:</span>
+          {contextualPrompts.map((prompt) => <PromptChip key={prompt} text={prompt} />)}
+        </div>
+      )}
       {pendingPlan && (
         <div className="card" style={{ borderColor: 'var(--accent)' }}>
           <p className="pill">Agent proposed a {(pendingPlan.payload as Plan).goal.kind === 'debt' ? 'repayment' : 'savings'} plan · {((pendingPlan.payload as Plan).adjustments).length} adjustment(s)</p>

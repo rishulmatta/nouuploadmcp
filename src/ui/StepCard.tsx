@@ -29,7 +29,7 @@ export default function StepCard({ n, title, subtitle, prompts, children }: {
   )
 }
 
-function PromptChip({ text }: { text: string }) {
+export function PromptChip({ text }: { text: string }) {
   return (
     <div className="prompt-chip row" style={{ justifyContent: 'space-between' }}>
       <span>"{text}"</span>
