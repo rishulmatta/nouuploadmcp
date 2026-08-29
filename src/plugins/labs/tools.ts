@@ -271,7 +271,7 @@ export const labsTools: ToolSpec[] = [
   },
   {
     name: 'propose_diet_plan',
-    description: 'Create the diet-plan artifact shown in the page table. When the user asks for a plan, schedule, or dietary recommendations, call this tool instead of only replying in chat. The proposal renders immediately on the page for human review and is saved only after approval.',
+    description: 'Create or revise the diet-plan artifact shown in the page table. Always use this tool—not browser clicks or typing—when the user asks for a new plan or asks to add, remove, replace, or change an existing plan item. For a revision, first call get_plan, apply the requested change to the returned goal and adjustments, then call propose_diet_plan with the complete revised plan. The proposal renders immediately for human review and is saved only after approval.',
     parameters: [
       { name: 'goal', type: 'object', description: 'Goal object with analyte, label, target, current, unit', required: true },
       { name: 'adjustments', type: 'array', description: 'Array of {item, action, targetAnalyte, rationale} objects', required: true },

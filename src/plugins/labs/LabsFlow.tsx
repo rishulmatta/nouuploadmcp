@@ -60,7 +60,7 @@ export default function LabsFlow({ documents }: { documents: DocumentMeta[] }) {
         subtitle="Ask the agent to revise, or edit the plan directly above"
         prompts={['Add an item to the plan for my low Vitamin D', 'Drop the fish oil item, I\'m allergic']}
       >
-        <p className="muted">The plan above is fully editable — add, remove, or change items yourself, or ask the agent to call <code>propose_diet_plan</code> again with a revision.</p>
+        <p className="muted">The plan above is fully editable — add, remove, or change items yourself, or ask the agent to call <code>get_plan</code> and then <code>propose_diet_plan</code> with the complete revision.</p>
       </StepCard>
 
       <StepCard n={5} title="Final review" prompts={["Do a final review and flag anything not going to plan"]}>
