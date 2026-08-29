@@ -66,7 +66,7 @@ function App() {
             <Link to="/how-it-works">How it works</Link> ·
             <Link to="/tools">Tool reference</Link> ·
             <Link to="/disclosures">Disclosures</Link> ·
-            <a href="https://github.com" target="_blank" rel="noreferrer">GitHub</a>
+            <a href="https://github.com/rishulmatta/nouuploadmcp" target="_blank" rel="noreferrer">GitHub</a>
           </span>
         </div>
       </footer>

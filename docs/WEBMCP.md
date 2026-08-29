@@ -1,6 +1,21 @@
 # WebMCP tool surface
 
-Tools register dynamically via `document.modelContext.registerTool()`. Core tools load at startup; plugin tools load when a plugin is selected; document-shaped schemas update after ingest.
+Tools register dynamically via `document.modelContext.registerTool()`. Core tools load at startup; plugin tools load when a plugin is selected; document-shaped schemas update after ingest. The implementation lives in [`src/core/mcp/registry.ts`](../src/core/mcp/registry.ts).
+
+## Registration
+
+Each internal tool specification has a stable name, description, typed parameters, authority tier, and handler. The registry converts those parameters into a JSON input schema and exposes the result through WebMCP:
+
+```ts
+document.modelContext.registerTool({
+  name: spec.name,
+  description: spec.description,
+  inputSchema,
+  execute: async (input) => registry.invoke(spec.name, input),
+})
+```
+
+For host compatibility the implementation checks `window.modelContext`, `document.modelContext`, and `navigator.modelContext`. It polls for late injection and re-syncs the tool surface when an agent context becomes available. Dynamic replacement is tied to an `AbortController` signal so stale plugin registrations can be retired.
 
 ## Authority tiers
 
@@ -69,3 +84,16 @@ Tools register dynamically via `document.modelContext.registerTool()`. Core tool
 - **Allowed** — data returned, audit entry written.
 - **Denied** — structured refusal with available scopes.
 - **Pending** — consent card shown; 60s timeout returns pending state.
+
+## Suggested verification prompts
+
+After loading the synthetic finance samples:
+
+1. `List the available plugins and select finance.`
+2. `Propose transactions from every loaded statement.`
+3. Accept several rows in the page, then ask: `Summarise spending and reconcile the statements.`
+4. `Propose category mappings and plot spending by category.`
+5. `Draft a savings plan for my goal.`
+6. Move a slider in the page, then ask: `Read the current plan and check whether it is feasible.`
+
+The final step verifies a core WebMCP benefit: the agent reads current page-owned state after a human edit instead of relying on stale conversational state.
