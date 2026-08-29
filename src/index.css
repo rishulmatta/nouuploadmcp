@@ -329,3 +329,17 @@ footer.chrome {
 .flag-resolved { color: var(--accent-2); }
 .flag-unresolved { color: var(--danger); }
 .flag-uncovered { color: var(--warn); }
+
+.review-summary {
+  max-width: 76ch;
+  padding: 0.9rem 1rem;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: rgba(227, 178, 60, 0.06);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}

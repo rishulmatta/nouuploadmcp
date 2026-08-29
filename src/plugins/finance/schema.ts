@@ -27,6 +27,7 @@ export interface CategoryMapping {
   merchant: string
   category: string
   matchCount: number
+  enabled?: boolean
 }
 
 export function txKey(tx: { doc: string; page: number; anchor: number }) {

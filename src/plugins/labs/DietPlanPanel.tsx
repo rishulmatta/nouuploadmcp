@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { getProposals, subscribe, updateProposal } from '../../core/staging/store'
 import { listResults } from '../../core/storage/labResults'
 import { listApprovedRanges } from '../../core/storage/ranges'
@@ -35,12 +35,9 @@ export default function DietPlanPanel() {
     return subscribe(load)
   }, [])
 
-  const saveTimer = useRef<ReturnType<typeof setTimeout>>()
   useEffect(() => {
     if (!loaded || !plan) return
-    clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => { saveDietMemory(plan) }, 400)
-    return () => clearTimeout(saveTimer.current)
+    void saveDietMemory(plan)
   }, [loaded, plan])
 
   const outOfRange = results.filter((r) => {
@@ -100,11 +97,21 @@ export default function DietPlanPanel() {
         <div className="card col" style={{ borderColor: 'var(--accent)' }}>
           <p className="pill">Agent proposed a plan · {(pendingPlan.payload as DietPlan).adjustments.length} adjustment(s)</p>
           <p><strong>{(pendingPlan.payload as DietPlan).goal.label}</strong> ({(pendingPlan.payload as DietPlan).goal.analyte}) — target {(pendingPlan.payload as DietPlan).goal.target} {(pendingPlan.payload as DietPlan).goal.unit}, current {(pendingPlan.payload as DietPlan).goal.current} {(pendingPlan.payload as DietPlan).goal.unit}</p>
-          <ul>
-            {(pendingPlan.payload as DietPlan).adjustments.map((a, i) => (
-              <li key={i}>{a.action} <strong>{a.item}</strong> — targets {a.targetAnalyte}. <span className="muted">{a.rationale}</span></li>
-            ))}
-          </ul>
+          <table className="audit-table">
+            <thead>
+              <tr><th>Item</th><th>Action</th><th>Targets analyte</th><th>Rationale</th></tr>
+            </thead>
+            <tbody>
+              {(pendingPlan.payload as DietPlan).adjustments.map((a, i) => (
+                <tr key={i}>
+                  <td>{a.item}</td>
+                  <td>{a.action}</td>
+                  <td>{a.targetAnalyte}</td>
+                  <td>{a.rationale}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
           <div className="row">
             <button className="primary" onClick={acceptPlanProposal}>Accept proposal</button>
             <input placeholder="Rejection note" value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} style={{ flex: 1 }} />

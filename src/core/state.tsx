@@ -4,6 +4,7 @@ import { deleteDocument, listDocuments, saveDocument } from './storage/documents
 import { financeRedactionRules, labsRedactionRules } from './redact/patterns'
 import { defaultPolicy, setPolicy } from './consent/policy'
 import { reconcileFinanceDocuments } from '../plugins/finance/dataset'
+import { resetLabsDataset } from '../plugins/labs/dataset'
 
 export type PluginId = 'finance' | 'labs'
 
@@ -45,6 +46,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (plugin === 'finance') {
       const active = await listDocuments('finance')
       await reconcileFinanceDocuments(active.map((document) => document.id))
+    } else if (plugin === 'labs') {
+      await resetLabsDataset()
     }
     await refreshDocuments()
     return meta
@@ -55,6 +58,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (plugin === 'finance') {
       const active = await listDocuments('finance')
       await reconcileFinanceDocuments(active.map((document) => document.id))
+    } else if (plugin === 'labs') {
+      await resetLabsDataset()
     }
     await refreshDocuments()
   }, [plugin, refreshDocuments])

@@ -1,6 +1,6 @@
 import type { ToolSpec } from './types'
 import { listDocuments, loadParsedPage, getDocument } from '../storage/documents'
-import { scanRedactions, redactText, applyRedactions } from '../redact/engine'
+import { scanRedactions, applyRedactions } from '../redact/engine'
 import { financeRedactionRules, labsRedactionRules } from '../redact/patterns'
 import { getPolicy } from '../consent/policy'
 import { listGrants, addGrant } from '../consent/grants'
@@ -60,6 +60,9 @@ export function buildDocumentTools(plugin: string | null): ToolSpec[] {
         }
         const redactions = scanRedactions(parsed.spans, rules)
         const ruleIds = redactions.map((r) => r.ruleId)
+        // Populating the local review UI does not authorize disclosing the raw
+        // statement page to the model.
+        if (plugin === 'finance') ruleIds.push('statement_page_text')
         const policy = getPolicy('default')
         const grants = await listGrants()
         const outcome = evaluateConsent(
@@ -73,12 +76,10 @@ export function buildDocumentTools(plugin: string | null): ToolSpec[] {
         await appendAudit(consentToAuditEntry('get_page_text', `page:${doc}:${page}`, outcome))
 
         if (outcome.status === 'denied') {
-          const redactedText = redactText(parsed.text, rules)
           return {
             denied: true,
             reason: outcome.reason,
             available: outcome.available,
-            redactedPreview: redactedText.slice(0, 500),
           }
         }
 

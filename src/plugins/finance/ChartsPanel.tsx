@@ -1,11 +1,11 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { listCommits, subscribeCommits } from '../../core/storage/commits'
-import { groupByMonth } from './analytics'
+import { currencySymbol, monthKey } from './analytics'
 import { subscribeCategoryChart, getCategoryChartSnapshot, renderSpendByCategory } from './chartState'
 import type { Transaction } from './schema'
 
-// Net cashflow is pure date arithmetic on committed transactions — no
-// categorisation involved — so it's always safe to keep it live.
+// Monthly totals are pure date arithmetic on committed transactions — no
+// categorisation involved — so they are always safe to keep live.
 export function MonthlyCashflowChart() {
   const [txs, setTxs] = useState<Transaction[]>([])
 
@@ -17,8 +17,48 @@ export function MonthlyCashflowChart() {
 
   if (txs.length === 0) return <p>No committed transactions yet — accept some proposals first.</p>
 
-  const monthly = Array.from(groupByMonth(txs).entries()).sort((a, b) => a[0].localeCompare(b[0]))
-  return <BarChart data={monthly} />
+  const byMonth = new Map<string, { spent: number; income: number; count: number }>()
+  for (const tx of txs) {
+    const month = monthKey(tx.date)
+    const current = byMonth.get(month) ?? { spent: 0, income: 0, count: 0 }
+    if (tx.amount < 0) current.spent += Math.abs(tx.amount)
+    else current.income += tx.amount
+    current.count++
+    byMonth.set(month, current)
+  }
+
+  const monthly = Array.from(byMonth.entries())
+    .map(([month, values]) => ({ month, ...values, net: values.income - values.spent }))
+    .sort((a, b) => a.month.localeCompare(b.month))
+  const symbol = currencySymbol(txs)
+  const totalSpent = monthly.reduce((sum, month) => sum + month.spent, 0)
+  const averageSpent = totalSpent / monthly.length
+
+  return (
+    <div className="col">
+      <div className="row" style={{ flexWrap: 'wrap' }}>
+        <span className="pill">Total spent: {formatMoney(totalSpent, symbol)}</span>
+        <span className="pill">Average per month: {formatMoney(averageSpent, symbol)}</span>
+        <span className="pill">{txs.length} accepted transaction{txs.length === 1 ? '' : 's'}</span>
+      </div>
+      <BarChart data={monthly.map((month) => [month.month, month.spent])} symbol={symbol} />
+      <div className="col" style={{ gap: 0, maxHeight: 280, overflowY: 'auto' }}>
+        {monthly.map((month) => (
+          <div key={month.month} className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap', borderBottom: '1px solid var(--border)', padding: '0.55rem 0' }}>
+            <strong>{formatMonth(month.month)}</strong>
+            <div className="row" style={{ flexWrap: 'wrap' }}>
+              <span>Spent <strong>{formatMoney(month.spent, symbol)}</strong></span>
+              <span className="muted">Income {formatMoney(month.income, symbol)}</span>
+              <span style={{ color: month.net >= 0 ? 'var(--accent-2)' : 'var(--danger)' }}>
+                Net {formatSignedMoney(month.net, symbol)}
+              </span>
+              <span className="muted">{month.count} transaction{month.count === 1 ? '' : 's'}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 // Spend by category depends on mappings that may still be in flux, so it only
@@ -53,14 +93,28 @@ export function CategorySpendChart() {
   )
 }
 
-function BarChart({ data }: { data: [string, number][] }) {
+function formatMoney(value: number, symbol: string) {
+  return `${symbol}${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+function formatSignedMoney(value: number, symbol: string) {
+  return `${value >= 0 ? '+' : '−'}${formatMoney(Math.abs(value), symbol)}`
+}
+
+function formatMonth(month: string) {
+  const [year, monthNumber] = month.split('-').map(Number)
+  return new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric', timeZone: 'UTC' })
+    .format(new Date(Date.UTC(year, monthNumber - 1, 1)))
+}
+
+function BarChart({ data, symbol }: { data: [string, number][]; symbol: string }) {
   if (data.length === 0) return null
   const width = 600
-  const height = 200
-  const padding = { top: 10, right: 10, bottom: 60, left: 50 }
+  const height = 230
+  const padding = { top: 32, right: 10, bottom: 60, left: 50 }
   const chartWidth = width - padding.left - padding.right
   const chartHeight = height - padding.top - padding.bottom
-  const max = Math.max(...data.map((d) => Math.abs(d[1])))
+  const max = Math.max(1, ...data.map((d) => Math.abs(d[1])))
   const barWidth = chartWidth / data.length * 0.7
   const gap = chartWidth / data.length * 0.3
 
@@ -73,7 +127,11 @@ function BarChart({ data }: { data: [string, number][] }) {
         const y = padding.top + chartHeight - barHeight
         return (
           <g key={d[0]}>
-            <rect x={x} y={y} width={barWidth} height={barHeight} fill={val >= 0 ? 'var(--accent-2)' : 'var(--danger)'} rx={4} />
+            <title>{d[0]}: {formatMoney(val, symbol)} spent</title>
+            <rect x={x} y={y} width={barWidth} height={barHeight} fill="var(--danger)" rx={4} opacity={0.82} />
+            <text x={x + barWidth / 2} y={Math.max(14, y - 6)} textAnchor="middle" fill="var(--text)" fontSize={10}>
+              {formatMoney(val, symbol)}
+            </text>
             <text x={x + barWidth / 2} y={height - 10} textAnchor="middle" fill="var(--muted)" fontSize={10} transform={`rotate(-45, ${x + barWidth / 2}, ${height - 10})`}>
               {d[0]}
             </text>

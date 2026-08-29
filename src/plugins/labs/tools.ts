@@ -8,7 +8,7 @@ import { extractResultsFromPage } from './extract'
 import type { LabResult, LabResultProposal, ReferenceRangeProposal, ApprovedReferenceRange, DietPlan, DietGoal, DietAdjustment } from './schema'
 import { resultKey } from './schema'
 import { standardRangeFor } from './mappings'
-import { reviewDietPlan } from './adherenceState'
+import { reviewDietPlan, type DietReviewFinding } from './adherenceState'
 
 interface EffectiveRange {
   low?: number
@@ -271,7 +271,7 @@ export const labsTools: ToolSpec[] = [
   },
   {
     name: 'propose_diet_plan',
-    description: 'Draft a diet plan targeting an out-of-range analyte, with per-item adjustments. Staged until approved.',
+    description: 'Create the diet-plan artifact shown in the page table. When the user asks for a plan, schedule, or dietary recommendations, call this tool instead of only replying in chat. The proposal renders immediately on the page for human review and is saved only after approval.',
     parameters: [
       { name: 'goal', type: 'object', description: 'Goal object with analyte, label, target, current, unit', required: true },
       { name: 'adjustments', type: 'array', description: 'Array of {item, action, targetAnalyte, rationale} objects', required: true },
@@ -289,11 +289,38 @@ export const labsTools: ToolSpec[] = [
   },
   {
     name: 'review_diet_plan',
-    description: 'Final review of the approved diet plan against the latest accepted results: flags each targeted analyte as resolved (back in range), unresolved (still out of range), or no-data (nothing new since the plan), and separately flags any out-of-range result the plan doesn\'t cover. Renders on the page — call this whenever asked to do a final review, and summarise the flags in chat.',
-    parameters: [],
+    description: 'Publish a final review of the latest edited diet-plan table on the page. Before calling, use get_plan to inspect every row. Pass a finding for every dietary claim. Format summary as 3–6 concise newline-separated bullets, each beginning with "• ": cover unresolved/resolved labs, uncovered issues, questionable plan items, and the recommended next step. The page renders this summary, so never leave it only in chat. Multi-analyte targets such as "Vitamin D and Total Cholesterol" are matched separately against lab results.',
+    parameters: [
+      { name: 'findings', type: 'array', description: 'One entry per plan row: {item, status: "supported" | "questionable" | "unsupported", note}. Include user-added rows and flag false or weak claims.', required: true },
+      { name: 'summary', type: 'string', description: 'A readable 3–6 line summary. Every line must be one concise bullet beginning with "• ". Include lab status, plan concerns, and next steps; do not submit a paragraph.', required: true },
+    ],
     tier: 'attention',
     plugin: 'labs',
-    handler: async () => reviewDietPlan(),
+    handler: async ({ findings, summary }) => {
+      if (!Array.isArray(findings) || findings.length === 0) {
+        throw new Error('Final review was not published: findings must contain one assessment for every diet-plan row. Call get_plan, assess each row, then retry review_diet_plan with findings and summary.')
+      }
+      const validStatuses = new Set(['supported', 'questionable', 'unsupported'])
+      const invalidFinding = findings.find((finding) => {
+        if (!finding || typeof finding !== 'object') return true
+        const value = finding as Record<string, unknown>
+        return typeof value.item !== 'string'
+          || !validStatuses.has(String(value.status))
+          || typeof value.note !== 'string'
+          || value.note.trim().length === 0
+      })
+      if (invalidFinding) {
+        throw new Error('Final review was not published: every finding requires item, status (supported, questionable, or unsupported), and a non-empty note.')
+      }
+      if (typeof summary !== 'string' || summary.trim().length === 0) {
+        throw new Error('Final review was not published: include the complete user-facing summary so it can render on the page.')
+      }
+      const summaryLines = summary.trim().split('\n').map((line) => line.trim()).filter(Boolean)
+      if (summaryLines.length < 3 || summaryLines.length > 6 || summaryLines.some((line) => !line.startsWith('• '))) {
+        throw new Error('Final review was not published: format summary as 3–6 newline-separated bullets, with every line beginning with "• ". Do not submit one large paragraph.')
+      }
+      return reviewDietPlan(findings as DietReviewFinding[], summary)
+    },
   },
 ]
 

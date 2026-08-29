@@ -7,6 +7,14 @@ export interface RedactionRule {
 
 export const financeRedactionRules: RedactionRule[] = [
   {
+    // Raw statement text is a separate disclosure from local extraction. This
+    // synthetic rule is evaluated by get_page_text but matches no page spans.
+    id: 'statement_page_text',
+    label: 'Raw statement page text',
+    default: 'deny',
+    regex: /$^/g,
+  },
+  {
     id: 'account_number',
     label: 'Account number',
     default: 'deny',

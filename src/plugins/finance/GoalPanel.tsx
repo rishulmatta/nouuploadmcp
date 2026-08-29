@@ -23,6 +23,35 @@ function RequiredSavings({ adjustments, cur, isDebt }: { adjustments: Adjustment
   )
 }
 
+function SavingsAdvice({ adjustments, cur, isDebt = false }: { adjustments: Adjustment[]; cur: string; isDebt?: boolean }) {
+  if (adjustments.length === 0) return null
+  return (
+    <div className="card col" style={{ background: 'var(--surface-2)' }}>
+      <div>
+        <h4 style={{ margin: 0 }}>Agent advice: where you could save</h4>
+        <span className="muted">Suggestions based on your accepted spending categories. You can adjust every target before using the plan.</span>
+      </div>
+      {adjustments.map((adjustment) => {
+        const monthlySaving = Math.max(0, adjustment.currentMonthly - adjustment.targetMonthly)
+        return (
+          <div key={adjustment.category} style={{ borderTop: '1px solid var(--border)', paddingTop: '0.65rem' }}>
+            <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+              <strong>{adjustment.category}</strong>
+              <span className="pill">
+                {isDebt ? 'Free up' : 'Save'} {cur}{monthlySaving.toFixed(2)}/month · {cur}{(monthlySaving * 12).toFixed(2)}/year
+              </span>
+            </div>
+            <p style={{ margin: '0.35rem 0 0' }}>
+              Reduce average spending from {cur}{adjustment.currentMonthly.toFixed(2)} to {cur}{adjustment.targetMonthly.toFixed(2)} per month.
+              {' '}<span className="muted">{adjustment.rationale}</span>
+            </p>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 /** Warns when a plan asks for more than the account's actual average monthly
  *  surplus can support — the thing a slider alone can't tell you. Live and
  *  always visible (pure arithmetic on committed data + the current plan), the
@@ -91,6 +120,7 @@ export default function GoalPanel() {
     () => [],
   )
   const pendingPlan = useMemo(() => planProposals.filter((p) => p.status === 'pending').at(-1), [planProposals])
+  const rejectedPlan = useMemo(() => planProposals.filter((p) => p.status === 'rejected').at(-1), [planProposals])
 
   useEffect(() => {
     const load = () => { loadApprovedMappings().then(() => listCommits()).then(setTxs) }
@@ -189,8 +219,9 @@ export default function GoalPanel() {
   }
 
   const rejectPlanProposal = () => {
-    if (!pendingPlan) return
-    updateProposal(pendingPlan.id, { status: 'rejected', note: rejectNote })
+    const reason = rejectNote.trim()
+    if (!pendingPlan || !reason) return
+    updateProposal(pendingPlan.id, { status: 'rejected', note: reason })
     setRejectNote('')
   }
 
@@ -202,18 +233,30 @@ export default function GoalPanel() {
         <div className="card" style={{ borderColor: 'var(--accent)' }}>
           <p className="pill">Agent proposed a {(pendingPlan.payload as Plan).goal.kind === 'debt' ? 'repayment' : 'savings'} plan · {((pendingPlan.payload as Plan).adjustments).length} adjustment(s)</p>
           <p><strong>{(pendingPlan.payload as Plan).goal.label}</strong> — {(pendingPlan.payload as Plan).goal.kind === 'debt' ? 'payoff' : 'target'} {cur}{(pendingPlan.payload as Plan).goal.target}, current {cur}{(pendingPlan.payload as Plan).goal.current}, rate {(pendingPlan.payload as Plan).goal.rate ?? 0}%</p>
-          <ul>
-            {(pendingPlan.payload as Plan).adjustments.map((a) => (
-              <li key={a.category}>{a.category}: {cur}{a.currentMonthly.toFixed(2)} → {cur}{a.targetMonthly.toFixed(2)} — <span className="muted">{a.rationale}</span></li>
-            ))}
-          </ul>
+          <SavingsAdvice adjustments={(pendingPlan.payload as Plan).adjustments} cur={cur} isDebt={(pendingPlan.payload as Plan).goal.kind === 'debt'} />
           <RequiredSavings adjustments={(pendingPlan.payload as Plan).adjustments} cur={cur} isDebt={(pendingPlan.payload as Plan).goal.kind === 'debt'} />
           <FeasibilityNote requiredMonthly={monthlyContribution((pendingPlan.payload as Plan).adjustments)} avgMonthlySurplus={avgMonthlySurplus} cur={cur} />
-          <div className="row">
-            <button className="primary" onClick={acceptPlanProposal}>Accept proposal</button>
-            <input placeholder="Rejection note" value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} style={{ flex: 1 }} />
-            <button onClick={rejectPlanProposal}>Reject</button>
+          <div className="col" style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '0.75rem' }}>
+            <strong>Want changes?</strong>
+            <span className="muted">Tell the agent what to amend in chat. To decline this version, add a reason below and reject it; your reason will be available to the agent when you ask for a revision.</span>
           </div>
+          <div className="row" style={{ flexWrap: 'wrap' }}>
+            <button className="primary" onClick={acceptPlanProposal}>Accept proposal</button>
+            <input aria-label="Reason for rejecting plan" placeholder="What should change? (required to reject)" value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} style={{ flex: '1 1 260px' }} />
+            <button onClick={rejectPlanProposal} disabled={!rejectNote.trim()}>Reject with reason</button>
+          </div>
+        </div>
+      )}
+
+      {!pendingPlan && rejectedPlan && (
+        <div className="card col" style={{ borderColor: 'var(--border)' }}>
+          <strong>Plan rejected</strong>
+          <span className="muted">Reason saved for the agent: “{rejectedPlan.note}”</span>
+          <div className="prompt-chip row" style={{ justifyContent: 'space-between' }}>
+            <span>“I rejected the proposed plan. Read my rejection note and propose a revised plan.”</span>
+            <button className="ghost" onClick={() => navigator.clipboard.writeText('I rejected the proposed plan. Read my rejection note and propose a revised plan.')} title="Copy prompt">Copy</button>
+          </div>
+          <span className="muted">Send that prompt in chat—the webpage cannot start a new agent turn by itself.</span>
         </div>
       )}
 
@@ -298,6 +341,7 @@ export default function GoalPanel() {
 
           {adjustments.length > 0 && (
             <>
+              <SavingsAdvice adjustments={adjustments} cur={cur} isDebt={isDebt} />
               <TotalMonthlySlider adjustments={adjustments} cur={cur} isDebt={isDebt} onChange={setAdjustments} />
               <FeasibilityNote requiredMonthly={monthlyContribution(adjustments)} avgMonthlySurplus={avgMonthlySurplus} cur={cur} />
               <div className="sliders col">

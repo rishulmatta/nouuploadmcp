@@ -67,7 +67,7 @@ export default function Workspace() {
       </StepCard>
 
       {plugin === 'finance' && <FinanceFlow documents={documents} />}
-      {plugin === 'labs' && <LabsFlow documents={documents} />}
+      {plugin === 'labs' && <LabsFlow key={documents.map((d) => d.id).join(':')} documents={documents} />}
     </div>
   )
 }

@@ -38,7 +38,7 @@ export default function FinanceFlow({ documents }: { documents: DocumentMeta[] }
       <StepCard
         n={2}
         title="Pick your transactions"
-        subtitle="Extract from your statements, then accept or reject what the agent found — nothing is visible to the agent until accepted"
+        subtitle="Extract locally, then accept or reject what was found — transaction details are not returned to the agent until accepted"
         prompts={['Extract the transactions from my statements', 'What transactions are pending review?']}
       >
         <div className="row">
@@ -51,7 +51,7 @@ export default function FinanceFlow({ documents }: { documents: DocumentMeta[] }
 
       <MappingReviewPanel />
 
-      <StepCard n={3} title="Monthly spend" subtitle="Updates automatically as you accept transactions" prompts={['Summarise my monthly cashflow']}>
+      <StepCard n={3} title="Monthly spend" subtitle="Spend, income and net cashflow — updates automatically as you accept transactions" prompts={['Summarise my monthly cashflow']}>
         <MonthlyCashflowChart />
       </StepCard>
 
@@ -68,7 +68,7 @@ export default function FinanceFlow({ documents }: { documents: DocumentMeta[] }
         n="5–7"
         title="Savings plan, sliders & feasibility"
         subtitle="Ask for a plan, tune it below, then check if it's realistic"
-        prompts={['I want to save $40,000 for a car — draft a plan', 'Is this plan feasible given my real spending?']}
+        prompts={['I want to save $40,000 for a car — advise where I can save money and draft a plan', 'Is this plan feasible given my real spending?']}
       >
         <GoalPanel />
       </StepCard>

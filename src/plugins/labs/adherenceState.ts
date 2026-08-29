@@ -1,7 +1,7 @@
 import { listResults } from '../../core/storage/labResults'
 import { listApprovedRanges } from '../../core/storage/ranges'
 import { loadDietMemory } from './memory'
-import type { LabResult, ApprovedReferenceRange } from './schema'
+import type { LabResult, ApprovedReferenceRange, DietAdjustment } from './schema'
 
 // Mirrors chartState.ts on the finance side: a final review of the approved
 // diet plan against the latest results is interpretive (which results count as
@@ -19,8 +19,17 @@ export interface AdherenceFlag {
   date?: string
 }
 
+export interface DietReviewFinding {
+  item: string
+  status: 'supported' | 'questionable' | 'unsupported'
+  note: string
+}
+
 export interface AdherenceSnapshot {
   flags: AdherenceFlag[]
+  adjustments: DietAdjustment[]
+  findings: DietReviewFinding[]
+  summary?: string
   reviewedAt: number
   note?: string
 }
@@ -53,10 +62,17 @@ function isOutOfRange(value: number, range: { low?: number; high?: number }): bo
   return false
 }
 
-export async function reviewDietPlan(): Promise<AdherenceSnapshot> {
+function targetAnalytes(target: string): string[] {
+  return target
+    .split(/\s*(?:,|&|\band\b|\/|;)\s*/i)
+    .map((value) => value.trim())
+    .filter(Boolean)
+}
+
+export async function reviewDietPlan(findings: DietReviewFinding[] = [], summary?: string): Promise<AdherenceSnapshot> {
   const plan = await loadDietMemory()
   if (!plan) {
-    snapshot = { flags: [], reviewedAt: Date.now(), note: 'No approved diet plan yet.' }
+    snapshot = { flags: [], adjustments: [], findings: [], reviewedAt: Date.now(), note: 'No approved diet plan yet.' }
     notify()
     return snapshot
   }
@@ -69,7 +85,7 @@ export async function reviewDietPlan(): Promise<AdherenceSnapshot> {
     latestByAnalyte.set(r.analyte, r)
   }
 
-  const targeted = new Set(plan.adjustments.map((a) => a.targetAnalyte))
+  const targeted = new Set(plan.adjustments.flatMap((a) => targetAnalytes(a.targetAnalyte)))
   const flags: AdherenceFlag[] = []
 
   for (const analyte of targeted) {
@@ -106,7 +122,7 @@ export async function reviewDietPlan(): Promise<AdherenceSnapshot> {
     }
   }
 
-  snapshot = { flags, reviewedAt: Date.now() }
+  snapshot = { flags, adjustments: plan.adjustments, findings, summary, reviewedAt: Date.now() }
   notify()
   return snapshot
 }

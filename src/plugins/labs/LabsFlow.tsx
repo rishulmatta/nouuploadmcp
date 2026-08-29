@@ -50,7 +50,7 @@ export default function LabsFlow({ documents }: { documents: DocumentMeta[] }) {
         <TrendsPanel />
       </StepCard>
 
-      <StepCard n={3} title="Deficiencies & diet" prompts={["What am I deficient in, and what diet would help?"]}>
+      <StepCard n={3} title="Deficiencies & diet" subtitle="Ask for a plan and the agent will place it in the review table below" prompts={["Create a diet plan from my out-of-range results and put it in the table below"]}>
         <DietPlanPanel />
       </StepCard>
 

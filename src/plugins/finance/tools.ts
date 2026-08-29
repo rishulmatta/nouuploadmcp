@@ -67,7 +67,9 @@ export const financeTools: ToolSpec[] = [
       for (const p of unique) {
         stageProposal({ id: txKey(p), type: 'transaction', payload: p })
       }
-      return { proposed: unique.length, sample: unique.slice(0, 3) }
+      // Payloads stay page-local for human review. Returning even a sample here
+      // would disclose transaction details before acceptance.
+      return { proposed: unique.length }
     },
   },
   {
@@ -203,10 +205,10 @@ export const financeTools: ToolSpec[] = [
   },
   {
     name: 'propose_savings_plan',
-    description: 'Draft a savings plan toward a goal (e.g. a car, an emergency fund) with per-category spending adjustments. Staged until approved; renders as sliders on the page.',
+    description: 'Draft a savings plan toward a goal (e.g. a car, an emergency fund) and advise which accepted spending categories offer realistic savings opportunities. Every adjustment must include a rationale grounded in the user\'s category spending. Staged until approved; renders as advice plus editable sliders on the page.',
     parameters: [
       { name: 'goal', type: 'object', description: 'Goal object: { label, target, current, rate? } — rate is an assumed annual return, as a plain percentage number where 5 means 5% (not 0.05). Omit or 0 if you\'re not assuming any investment growth.', required: true },
-      { name: 'adjustments', type: 'array', description: 'Array of { category, currentMonthly, targetMonthly, rationale }. currentMonthly must be a true monthly average — use get_spend_by_category\'s avgMonthly field, never its total (which is summed across every month of statements loaded, not one month) — or the plan will propose an unaffordable amount.', required: true },
+      { name: 'adjustments', type: 'array', description: 'Savings advice as an array of { category, currentMonthly, targetMonthly, rationale }. Recommend only categories supported by accepted transaction data, and explain why each reduction is realistic. currentMonthly must be a true monthly average — use get_spend_by_category\'s avgMonthly field, never its total (which is summed across every month of statements loaded, not one month) — or the plan will propose an unaffordable amount.', required: true },
     ],
     tier: 'staged',
     plugin: 'finance',

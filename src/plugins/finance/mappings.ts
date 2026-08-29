@@ -6,6 +6,7 @@ export interface CategoryRule {
   pattern: string
   category: string
   merchant: string
+  enabled?: boolean
 }
 
 // Rules the agent proposed and a human approved (propose_mapping), consulted
@@ -16,7 +17,7 @@ let approvedRules: CategoryRule[] = []
 
 export async function loadApprovedMappings(): Promise<CategoryRule[]> {
   const approved = await listApprovedMappings()
-  approvedRules = approved.map((m: CategoryMapping) => ({ id: m.id, pattern: m.pattern, category: m.category, merchant: m.merchant }))
+  approvedRules = approved.map((m: CategoryMapping) => ({ id: m.id, pattern: m.pattern, category: m.category, merchant: m.merchant, enabled: m.enabled !== false }))
   return approvedRules
 }
 
@@ -40,7 +41,15 @@ export const defaultCategoryRules: CategoryRule[] = [
 
 export function categorize(description: string, rules?: CategoryRule[]): { category: string; merchant: string } {
   const lower = description.toLowerCase()
-  const activeRules = rules ?? [...approvedRules, ...defaultCategoryRules]
+  if (!rules) {
+    const userRule = approvedRules.find((rule) => lower.includes(rule.pattern))
+    if (userRule) {
+      return userRule.enabled === false
+        ? { category: 'Other', merchant: userRule.merchant }
+        : { category: userRule.category, merchant: userRule.merchant }
+    }
+  }
+  const activeRules = rules ?? defaultCategoryRules
   for (const rule of activeRules) {
     if (lower.includes(rule.pattern)) {
       return { category: rule.category, merchant: rule.merchant }
