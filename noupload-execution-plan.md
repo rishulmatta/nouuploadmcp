@@ -4,18 +4,14 @@
 |---|---|
 | **Product** | No Upload |
 | **Domain** | **nouploadmcp.app** |
-| **Live URL** | `https://nouploadmcp.app` (Cloudflare Pages) |
+| **Live URL** | `https://nouploadmcp.app` (Vercel) |
 | **Hackathon** | The WebMCP Challenge (Devpost) |
 | **Deadline** | Thu Sep 3 2026, 1:00pm PDT — *treat Tue Sep 2 EOD as the real deadline* |
-| **Today** | Fri Aug 28 — 6 working days |
+| **Today** | Sat Aug 29 — 5 working days |
 | **Primary plugin** | Financial statements |
 | **Secondary plugin** | Blood test reports (gated on Gate 4) |
 
 **v4 correction:** the finance journey (§7) is illustrative, not a scripted sequence — the actual interaction is an open-ended conversation with the human's own agent (Codex, Claude, ChatGPT), which can ask anything (a full plan, category clustering, a one-off question) against the aggregation tools in §6 and render the answer back on the page. The goal/plan model (§7 steps 18–24, §8) now covers **two goal kinds**: a savings goal (target, current, assumed return) and a debt/loan goal (outstanding balance, payoff target, interest rate/APR) — both expose target, current balance, and rate as sliders, and the agent can propose either a savings plan or a repayment plan.
-
-**v3 additions:** §17 SPA route map and home page design with ready copy · §18 legal, disclosures and the disclosure statement page · §19 fixtures and anonymisation.
-
-**v2 changes:** finance is now the primary plugin (real data available), labs is secondary. Adds the shared five-stage pipeline, reference-range fallback with provenance, and the goal-planner stage with sliders as a continuous review surface.
 
 ### Why finance leads
 
@@ -385,10 +381,10 @@ memory (never persisted)
       Grants.tsx         /grants
       Tools.tsx          /tools — rendered from the registry
       HowItWorks.tsx     /how-it-works
-      Disclosures.tsx    /disclosures — §18.2
+      Disclosures.tsx    /disclosures — copy in docs/DISCLOSURES.md
     ui/
       AgentStatusPill.tsx  §17.4
-      Disclaimer.tsx       §18.1 inline placements
+      Disclaimer.tsx       inline placements per docs/DISCLOSURES.md
   fixtures/
     finance/ statement-2025-09.pdf … (12)
     labs/    northwood-2021.pdf … (6)
@@ -396,6 +392,7 @@ memory (never persisted)
   docs/
     ARCHITECTURE.md       three authorities, five-stage pipeline, plugin interface
     WEBMCP.md             every tool, tier, consent behaviour
+    DISCLOSURES.md        inline disclaimers, /disclosures page copy, terms
 ```
 
 ---
@@ -404,41 +401,41 @@ memory (never persisted)
 
 ~10h/day. Each day ends with a **gate** — a binary check that decides the next day.
 
-### Day 0 — Fri Aug 28 (today, 4h)
+### Day 0 — Fri Aug 28 (4h)
 
 Riskiest unknowns first. Do not write a feature until these pass.
 
-- [ ] Vite + TS skeleton. `LICENSE` (MIT) as the first substantive commit
-- [ ] Deploy empty page to Cloudflare Pages
-- [ ] Register a trivial `ping` tool; confirm an agent can call it in **ChatGPT's in-app browser AND Chrome with WebMCP enabled**. Highest-risk item in the project
-- [ ] Verify OPFS works in the in-app browser; if not, switch to IndexedDB **today**
-- [ ] Generate 12 finance fixtures from your real statements: **anonymise merchant names, scale amounts by a constant, replace account details**. Plant deliberately: one statement with the table split across a page break; a "Balance brought forward" line that mimics a transaction; three variant spellings of one merchant; **one decimal error ($54.00 vs $5.40)**
-- [ ] `fixtures/GENERATOR.md` documenting what's planted — judges reading it see deliberate test design
+- [x] Vite + TS skeleton. `LICENSE` (MIT) as the first substantive commit
+- [x] Deploy empty page — live on Vercel at `nouploadmcp.app`
+- [ ] Register a trivial `ping` tool; confirm an agent can call it in **ChatGPT's in-app browser AND Chrome with WebMCP enabled**. Highest-risk item in the project — tools register, but an end-to-end agent call is not yet confirmed in both environments
+- [x] OPFS works — `storage/index.ts` picks OPFS, with the IndexedDB driver as fallback
+- [x] Generate 12 finance fixtures from your real statements: **anonymise merchant names, scale amounts by a constant, replace account details**. Plant deliberately: one statement with the table split across a page break; a "Balance brought forward" line that mimics a transaction; three variant spellings of one merchant; **one decimal error ($54.00 vs $5.40)**
+- [x] `fixtures/GENERATOR.md` documenting what's planted — judges reading it see deliberate test design
 
-**GATE 0:** a tool call succeeds from an agent in both environments, and storage works.
+**GATE 0:** a tool call succeeds from an agent in both environments, and storage works. *Storage works; the agent call is still open.*
 
 ### Day 1 — Sat Aug 29 (10h)
 
 Core: ingest → redaction → consent → audit.
 
-- [ ] pdf.js render + text layer with positions (3h)
-- [ ] Redaction engine + finance patterns + **preview panel** with per-span toggles (2h)
-- [ ] Consent middleware: allow / structured-deny / JIT-pending with 60s timeout (2.5h)
-- [ ] JIT consent card, three grant levels (1h)
-- [ ] Audit log store + table with the "nothing has been uploaded" header (1.5h)
+- [x] pdf.js render + text layer with positions
+- [x] Redaction engine + finance patterns (per-span preview panel not built)
+- [x] Consent middleware: allow / structured-deny / JIT-pending with 60s timeout
+- [x] JIT consent card, three grant levels
+- [x] Audit log store + table with the "nothing has been uploaded" header
 
-**GATE 1:** agent calls `get_page_text`, gets blocked, triggers a consent card, disclosure lands in the audit log. *This is the thesis working end to end.*
+**GATE 1:** agent calls `get_page_text`, gets blocked, triggers a consent card, disclosure lands in the audit log. *This is the thesis working end to end.* Machinery built; not yet exercised by a real agent.
 
 ### Day 2 — Sun Aug 30 (10h)
 
 Extraction and review.
 
-- [ ] Finance plugin: schema, identity, validation (1.5h)
-- [ ] Staging store + `propose_transactions` (1.5h)
-- [ ] **Split-screen review**: PDF left, rows right (3h)
-- [ ] Hover-to-highlight source. *If geometry fights you, fall back to text-search highlighting — near-identical visually, a fraction of the time* (2h)
-- [ ] `reconcile_statement` (0.5h — high value, low cost)
-- [ ] Accept/reject/edit → commits with provenance; `get_review_status` (1.5h)
+- [x] Finance plugin: schema, identity, validation
+- [x] Staging store + `propose_transactions`
+- [ ] **Split-screen review**: PDF left, rows right (3h) — current ReviewPanel is table-only
+- [ ] Hover-to-highlight source. *If geometry fights you, fall back to text-search highlighting — near-identical visually, a fraction of the time*
+- [x] `reconcile_statement`
+- [x] Accept/reject/edit → commits with provenance; `get_review_status`
 
 **GATE 2:** agent proposes → human rejects with a note → agent reads it back and adapts. *If this slips past Sunday night, cut the labs plugin now and say so out loud.*
 
@@ -466,7 +463,7 @@ Goal, sliders, memory, polish.
 - [ ] Home page per §17.3 — tiles, instructions, starter prompts, privacy strip (1h)
 - [ ] **Agent status pill** per §17.4 (0.5h — cheap insurance against a judge in the wrong browser)
 - [ ] `/tools` page rendered from the registry (0.5h — high-value judge artifact)
-- [ ] `/disclosures` page per §18.2 + inline disclaimers per §18.1 (0.5h)
+- [ ] `/disclosures` page + inline disclaimers per `docs/DISCLOSURES.md` (0.5h)
 - [ ] Wordmark, hero copy, `<title>`, OG tags + OG image (0.5h)
 - [ ] Full run-through in **both** judge environments (1h)
 
@@ -550,7 +547,7 @@ The privacy claim is verifiable rather than promised — open the network panel 
 An agent can work on documents it is not allowed to keep, and cannot commit anything without a human click. `get_review_status` closes a loop that previously did not exist: the human's accept, reject, note — or slider position — becomes structured input the agent reads and adapts to *mid-task*. Reject the row pulled from a "balance brought forward" line and it stops extracting them from the other eleven statements. Drag the dining-out slider to a number you'll actually live with, and it re-plans the rest around your real constraint. That needs a surface both parties can see at once. And because the page persists state the model doesn't, a fresh chat next week resumes with your full history: the agent is stateless, the page is not.
 
 **How we implemented WebMCP**
-~24 tools registered via `document.modelContext.registerTool()`, in four authority tiers: read, attention (changes only the screen), staged (mutates nothing until approved), and memory. Only six can alter stored data, none without a human click. Tools register dynamically — core at load, plugin tools on mode selection, document-shaped schemas after ingest, so document IDs and page counts are enums rather than free strings. Every consent-gated call passes through middleware returning data, a structured refusal that tells the agent what to ask for instead, or a pending promise resolved by a consent card in the page. Every decision is written to an append-only audit log the agent can also read. Two plugins — bank statements and blood test reports — share one five-stage pipeline, with canonicalisation and goal-planning as common core. Stack: Vite + TypeScript, pdf.js, OPFS, hand-rolled SVG charts, zero backend, Cloudflare Pages.
+~24 tools registered via `document.modelContext.registerTool()`, in four authority tiers: read, attention (changes only the screen), staged (mutates nothing until approved), and memory. Only six can alter stored data, none without a human click. Tools register dynamically — core at load, plugin tools on mode selection, document-shaped schemas after ingest, so document IDs and page counts are enums rather than free strings. Every consent-gated call passes through middleware returning data, a structured refusal that tells the agent what to ask for instead, or a pending promise resolved by a consent card in the page. Every decision is written to an append-only audit log the agent can also read. Two plugins — bank statements and blood test reports — share one five-stage pipeline, with canonicalisation and goal-planning as common core. Stack: Vite + TypeScript, pdf.js, OPFS, hand-rolled SVG charts, zero backend, Vercel.
 
 ---
 
@@ -558,8 +555,7 @@ An agent can work on documents it is not allowed to keep, and cannot commit anyt
 
 | Risk | Likelihood | Mitigation |
 |---|---|---|
-| WebMCP not working in ChatGPT's in-app browser | Med | **Gate 0, today** |
-| OPFS unavailable in the in-app browser | Med | IndexedDB fallback decided Day 0 |
+| WebMCP not working in ChatGPT's in-app browser | Med | **Gate 0 — still open** |
 | pdf.js text-layer geometry fights you | High | Text-search highlighting fallback, budgeted not discovered |
 | Blocking tool promise wedges the agent | Med | 60s timeout built with the promise |
 | Two plugins eat the week | High | Gate 4. Labs is Wednesday-AM-only, or unwired config |
@@ -618,7 +614,7 @@ Single page app, client-side routing, no server. Every route is a deep link so a
 | `/grants` | Active grants, per-grant revoke |
 | `/tools` | **Human-readable tool reference** — all ~24 tools, tier, consent behaviour |
 | `/how-it-works` | The three authorities, the five-stage pipeline, a diagram |
-| `/disclosures` | Legal — see §18 |
+| `/disclosures` | Legal — copy in `docs/DISCLOSURES.md` |
 
 `/tools` is a judge-facing artifact, not documentation debt. It renders from the same registry that feeds `registerTool()`, so it can never drift, and it makes the depth of your WebMCP implementation legible in fifteen seconds. Build it as a loop over the registry — an hour, maybe less.
 
@@ -712,63 +708,7 @@ This is the single most likely place to lose the Execution criterion. Budget the
 
 ## 18. Legal, disclosures, and conditions
 
-Two things: short inline disclaimers where the risk actually lives, and one `/disclosures` page that says everything properly. Stated limitations read as judgment; discovered ones read as carelessness.
-
-### 18.1 Inline disclaimers — non-negotiable placements
-
-| Where | Copy |
-|---|---|
-| Under any projection chart or slider surface | *Projections are arithmetic on your own data. Not financial advice.* |
-| Under any lab chart or range badge | *Not medical advice. Reference ranges are shown with their source; discuss any changes with your doctor.* |
-| On a standard-range badge | *Standard reference range — not from your report.* Tooltip: source + population (age/sex) |
-| Diet plan header | *General dietary suggestions for a goal you selected. Not a treatment plan.* |
-| Empty state, both plugins | *Text-layer PDFs only. Scanned images aren't supported.* |
-
-### 18.2 `/disclosures` page — full copy
-
-> # Disclosures
->
-> ## What this app does with your files
-> Your PDFs are read and stored **inside this browser tab**, using your browser's local storage. They are never transmitted to us or to anyone else. There is no backend, no account, and no server that could receive them. You can verify this: open your browser's network panel and use the app.
->
-> ## What the agent receives
-> When an agent asks for data, this page checks your disclosure settings and either returns the data, refuses, or asks you. Text you authorize is passed to the agent you have connected — and from that point it is handled under **that agent provider's** terms and privacy policy, not ours. We have no visibility into or control over it.
->
-> This is the one place your data can leave: the agent you chose to connect. The audit log records every such disclosure so you can see exactly what was shared and when.
->
-> ## What we collect
-> Nothing. No accounts, no analytics, no telemetry, no error reporting, no cookies beyond what's needed to keep the page working. Any of those would contradict the point of the app.
->
-> ## Not financial advice
-> This app performs arithmetic on figures extracted from your own statements. Projections show what happens if you save a given amount each month at a rate you set yourself. They are not forecasts, not recommendations, and not personalised financial advice. No feature of this app recommends financial products, investments, or allocations. Speak to a qualified adviser before making financial decisions.
->
-> ## Not medical advice
-> This app organises and charts results extracted from your own lab reports. Where a report prints a reference range, that range is used and labelled as coming from your report. Where it does not, a standard range may be shown — always labelled as standard, with its source and the population it applies to. Reference ranges vary by laboratory, method, age, sex, and other factors. Nothing here is a diagnosis, an interpretation, or a treatment recommendation. Discuss your results with a qualified clinician.
->
-> ## Accuracy and your responsibility
-> Data is extracted from your PDFs by an AI agent and is **not guaranteed to be correct**. That is why nothing is saved until you approve it against the source page, and why every stored value links back to the page it came from. Extraction errors are possible and expected — please review proposals carefully. Do not rely on this app for tax, legal, medical, or accounting purposes without independent verification.
->
-> ## Software warranty
-> Released under the MIT License. Provided "as is", without warranty of any kind. See LICENSE in the repository.
->
-> ## Third-party components
-> PDF rendering uses Mozilla's pdf.js (Apache 2.0). Reference range sources are cited individually where shown. No other third-party service is contacted at runtime.
->
-> ## Scope
-> Text-layer PDFs only; scanned documents are not supported. Single user, single device — no accounts, sync, or sharing. See the README for full scope.
->
-> ## Contact
-> Issues and questions: the GitHub repository.
-
-### 18.3 Terms of use — short form
-
-Link from the footer as *Terms*; can live on the same `/disclosures` page under a heading.
-
-> By using this app you accept that it is provided free, as-is, without warranty; that you are responsible for verifying any data it extracts; that it provides no financial, medical, legal, tax, or accounting advice; and that data you authorize for disclosure is thereafter governed by your agent provider's terms. Don't use it as a system of record.
-
-### 18.4 A consequence worth honouring
-
-**Do not add analytics.** Not Cloudflare Web Analytics, not Plausible, not a single beacon. Any outbound request contradicts the claim a judge is going to verify in their network panel — and it's the claim the entire entry rests on. This is also why the demo shot of an empty network panel works: it has to actually be empty.
+Moved to [`docs/DISCLOSURES.md`](docs/DISCLOSURES.md) — inline disclaimer placements, the full `/disclosures` page copy, short-form terms, and the no-analytics rule.
 
 ---
 
