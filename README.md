@@ -8,9 +8,17 @@ No Upload is a local consent gateway that lets a person and an AI agent work tog
 
 ## Why WebMCP
 
-Bank statements and lab reports are useful agent context, but uploading entire documents gives the agent more information than it needs. WebMCP allows No Upload to expose purpose-built operations from inside the page. The human loads documents locally, the agent requests only the data or action needed, and the page enforces consent and stages mutations for review.
+WebMCP lets No Upload offer useful agent workflows without handing the agent unrestricted copies of sensitive documents. The PDFs remain in the browser, the page exposes purpose-built operations, and every extracted record or proposed change stays under human control.
 
-Together, a person and agent can extract records, reconcile statements, classify spending, inspect lab trends, and draft editable plans while the page remains the authority for disclosure and persistence. Without WebMCP, this workflow would require either uploading the source documents or asking an agent to infer actions by clicking through an interface.
+### Bank statements
+
+A person can load months of statements, review the locally extracted transactions, and choose which rows the agent may process. The agent then uses WebMCP tools to categorise only those accepted transactions, propose merchant mappings, render spending charts, and draft an editable savings or repayment plan. After the person adjusts sliders or adds constraints, the agent can read the live plan and check it against actual cashflow—without accessing rejected transactions or raw statement pages.
+
+### Medical lab reports and diet plans
+
+A person can load multiple lab reports, verify each locally extracted result, and approve the measurements used for analysis. The agent can plot trends, identify results outside their supplied reference ranges, and propose a food-based plan in a reviewable table. The person can remove unsuitable items, add allergy information, or challenge a dietary claim; the agent then reads the revised plan and publishes a final review. The workflow organises results and diet ideas without exposing entire medical reports or turning the agent into the authority for diagnosis or treatment.
+
+In both cases, WebMCP provides a semantic alternative to uploading the source files or relying on fragile browser clicks. The page remains the authority for disclosure, approval, and persistence while the agent supplies reasoning and coordination.
 
 ## What the human and agent do
 
