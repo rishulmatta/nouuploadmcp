@@ -76,11 +76,12 @@ Next steps include more document plugins, export and backup controlled by the us
 
 1. Open https://nouploadmcp.app in ChatGPT's in-app browser. Google Chrome 149+ also works after enabling `chrome://flags/#enable-webmcp-testing` and restarting.
 2. Open **Financial statements** and click **Load samples**. The samples are synthetic.
-3. Ask the agent: `Select the finance plugin and propose transactions from the loaded statements.`
-4. Accept several proposals on the page.
-5. Ask: `Summarise my spending, propose category mappings, plot category spend, and draft a savings plan.`
-6. Approve a mapping and the plan, move a plan slider, then ask: `Read the current plan and tell me whether it is feasible.`
-7. Optional labs path: open **Blood test reports**, load samples, and ask: `Select the labs plugin, propose results, show out-of-range measurements, plot the relevant series, and propose a food-based plan.`
+3. Ask: `Extract the transactions from all my statements and put them on the page for me to review.`
+4. Accept only the transactions you want processed and reject the rest.
+5. Ask: `Use my accepted transactions—not raw statement text—to categorise my spending and show me a pie chart.` Approve the useful mappings.
+6. Ask: `I want to buy a Tesla Model Y and save $50,000 toward it. Use my actual monthly spending to propose a realistic savings plan and put it on the page.`
+7. Accept the plan, move its savings slider, and add the note `Keep my gym membership`. Then ask: `Read the plan as it appears now. Is it still feasible, and what should I change to reach the Tesla goal sooner without cutting the gym?`
+8. Optional labs path: open **Blood test reports**, load samples, and ask: `Select the labs plugin, propose results, show out-of-range measurements, plot the relevant series, and propose a food-based plan.`
 
 No login credentials or API keys are required.
 
@@ -93,9 +94,9 @@ The rules require a public YouTube video shorter than three minutes, with audio 
 | 0:00–0:15 | Landing page and privacy statement | The problem: private documents are useful context but unsafe to upload wholesale. |
 | 0:15–0:35 | Finance samples loaded in a WebMCP-capable browser | PDFs and extraction stay in the browser; the agent connects through structured page tools. |
 | 0:35–1:05 | Agent calls `select_plugin` and `propose_transactions`; review UI appears | Show genuine WebMCP calls and explain that proposals are not committed automatically. |
-| 1:05–1:30 | Human accepts/rejects records; audit/consent UI | The person controls disclosure and writes; provenance points back to document/page anchors. |
-| 1:30–2:00 | Agent proposes mappings, plots spending, and drafts a savings plan | Demonstrate a non-trivial multi-tool workflow and visible output. |
-| 2:00–2:20 | Human moves a slider; agent calls current-plan/feasibility tools | Show live collaboration: the agent evaluates the person's edited state, not stale chat state. |
+| 1:05–1:30 | Human selects which transactions count and rejects the rest | The person creates the dataset the agent is allowed to analyse; provenance remains visible. |
+| 1:30–2:00 | Agent categorises accepted spending, renders the chart, and proposes a $50,000 Tesla Model Y plan | Turn selected private records into a concrete, high-value artifact grounded in actual cashflow. |
+| 2:00–2:20 | Human moves a slider and adds “Keep my gym membership”; agent re-checks feasibility | Show the wow moment: the agent reads and reasons over the person's live edits instead of stale chat state. |
 | 2:20–2:35 | Tools or architecture screen and closing view | Briefly identify `document.modelContext.registerTool`, local storage, and the impact. |
 
 Recording notes:

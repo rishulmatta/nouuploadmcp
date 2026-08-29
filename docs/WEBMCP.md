@@ -50,6 +50,8 @@ For host compatibility the implementation checks `window.modelContext`, `documen
 | `get_review_status` | read | Pending/accepted/rejected counts + notes. |
 | `reconcile_statement` | read | Verify debits + credits vs closing balance. |
 | `list_categories` | read | Default spending categories. |
+| `list_accepted_transactions` | read | Structured rows explicitly accepted by the human. Use for merchant classification and categorisation instead of requesting raw statement text. |
+| `propose_category_mappings` | staged | Stage merchant/category rules from accepted transactions for human approval; no raw text or silent classifications. |
 | `propose_mapping` | staged | Propose a merchant/category rule from the transactions' own descriptions (not a hardcoded guess). Approving one classifies every matching transaction, now and on future statements. |
 | `find_recurring` | read | Repeating-charge detection. |
 | `get_goal` | memory | Read current goal (savings or debt) — reflects the page live, including unsaved slider drags. |
@@ -90,10 +92,10 @@ For host compatibility the implementation checks `window.modelContext`, `documen
 After loading the synthetic finance samples:
 
 1. `List the available plugins and select finance.`
-2. `Propose transactions from every loaded statement.`
-3. Accept several rows in the page, then ask: `Summarise spending and reconcile the statements.`
-4. `Propose category mappings and plot spending by category.`
-5. `Draft a savings plan for my goal.`
-6. Move a slider in the page, then ask: `Read the current plan and check whether it is feasible.`
+2. `Extract the transactions from all my statements and put them on the page for me to review.`
+3. Accept only the rows you want processed and reject the rest, then ask: `Summarise the monthly cashflow from only my accepted transactions.`
+4. `Use my accepted transactions—not raw statement text—to categorise my spending and show me a pie chart.`
+5. Approve useful mappings, then ask: `I want to buy a Tesla Model Y and save $50,000 toward it. Use my actual monthly spending to propose a realistic savings plan and put it on the page.`
+6. Accept the plan, move a slider, and add `Keep my gym membership` to its notes. Then ask: `Read the plan as it appears now. Is it still feasible, and what should I change to reach the Tesla goal sooner without cutting the gym?`
 
 The final step verifies a core WebMCP benefit: the agent reads current page-owned state after a human edit instead of relying on stale conversational state.

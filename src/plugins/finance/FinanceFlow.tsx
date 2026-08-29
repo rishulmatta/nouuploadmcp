@@ -39,7 +39,7 @@ export default function FinanceFlow({ documents }: { documents: DocumentMeta[] }
         n={2}
         title="Pick your transactions"
         subtitle="Extract locally, then accept or reject what was found — transaction details are not returned to the agent until accepted"
-        prompts={['Extract the transactions from my statements', 'What transactions are pending review?']}
+        prompts={['Extract the transactions from all my statements and put them on the page for me to review', 'What transactions are still waiting for my decision?']}
       >
         <div className="row">
           <button onClick={extract} disabled={loading}>Extract transactions</button>
@@ -51,7 +51,7 @@ export default function FinanceFlow({ documents }: { documents: DocumentMeta[] }
 
       <MappingReviewPanel />
 
-      <StepCard n={3} title="Monthly spend" subtitle="Spend, income and net cashflow — updates automatically as you accept transactions" prompts={['Summarise my monthly cashflow']}>
+      <StepCard n={3} title="Monthly spend" subtitle="Spend, income and net cashflow — based only on the transactions you accepted" prompts={['Summarise the monthly cashflow from only my accepted transactions']}>
         <MonthlyCashflowChart />
       </StepCard>
 
@@ -59,7 +59,7 @@ export default function FinanceFlow({ documents }: { documents: DocumentMeta[] }
         n={4}
         title="Categorize spending"
         subtitle="Nothing here updates on its own — ask the agent"
-        prompts={['Categorise my spending and show me a pie chart', 'Regenerate category mappings from my accepted transactions', "What's still showing as Other?", 'Render the spend by category chart']}
+        prompts={['Use my accepted transactions—not raw statement text—to categorise my spending and show me a pie chart', 'Regenerate category mappings from my accepted transactions', "What's still showing as Other?", 'Render the spend by category chart']}
       >
         <CategorySpendChart />
       </StepCard>

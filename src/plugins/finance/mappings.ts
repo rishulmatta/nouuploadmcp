@@ -10,9 +10,9 @@ export interface CategoryRule {
 }
 
 // Rules the agent proposed and a human approved (propose_mapping), consulted
-// before the generic defaults below since they're specific to this user's own
-// transaction descriptions. Applied at read time only — never rewrites a stored
-// transaction's description or category.
+// to the user's transaction descriptions. The generic rules below only seed
+// proposals; they never apply until the human approves them. Applied mappings
+// work at read time only and never rewrite a stored transaction.
 let approvedRules: CategoryRule[] = []
 
 export async function loadApprovedMappings(): Promise<CategoryRule[]> {
@@ -48,9 +48,10 @@ export function categorize(description: string, rules?: CategoryRule[]): { categ
         ? { category: 'Other', merchant: userRule.merchant }
         : { category: userRule.category, merchant: userRule.merchant }
     }
+    // Defaults seed reviewable proposals; they never classify silently.
+    return { category: 'Other', merchant: description }
   }
-  const activeRules = rules ?? defaultCategoryRules
-  for (const rule of activeRules) {
+  for (const rule of rules) {
     if (lower.includes(rule.pattern)) {
       return { category: rule.category, merchant: rule.merchant }
     }

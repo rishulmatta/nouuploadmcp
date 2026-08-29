@@ -2,10 +2,10 @@ import { Link } from 'react-router-dom'
 import { useAgentDetected } from '../core/mcp'
 
 const STARTER_PROMPTS = [
-  'Extract the transactions from all my statements',
-  'Categorise my spending and show me a pie chart',
-  'I want to save $40,000 for a car — draft a plan',
-  'Is this plan feasible given my real spending?',
+  'Extract the transactions from all my statements and put them on the page for me to review',
+  'Use my accepted transactions—not raw statement text—to categorise my spending and show me a pie chart',
+  'I want to buy a Tesla Model Y and save $50,000 toward it. Use my actual monthly spending to propose a realistic savings plan and put it on the page',
+  'Read the plan as it appears now. Is it still feasible, and what should I change to reach the Tesla goal sooner without cutting the gym?',
 ]
 
 const HOW_IT_WORKS = [
@@ -16,10 +16,10 @@ const HOW_IT_WORKS = [
 ]
 
 const FINANCE_STEPS = [
-  'Upload statements, accept transactions',
-  'Spend chart + category breakdown',
-  'Draft a savings plan, tune with sliders',
-  'Ask "is this feasible?" for a real answer',
+  'Upload statements, then choose which transactions count',
+  'Approve merchant categories and reveal the spending story',
+  'Turn a Tesla Model Y goal into a plan grounded in real cashflow',
+  'Tune the plan with the agent and see if it still works',
 ]
 
 const LABS_STEPS = [

@@ -17,8 +17,8 @@ async function currentPlan(): Promise<Plan | null> {
   if (live !== undefined) return live
   return (await loadMemory()) ?? null
 }
-import { approveMapping } from '../../core/storage/mappings'
-import { loadApprovedMappings } from './mappings'
+import { approveMapping, listApprovedMappings } from '../../core/storage/mappings'
+import { categorizeTransaction, defaultCategoryRules, loadApprovedMappings } from './mappings'
 import { renderSpendByCategory, invalidateCategoryChart } from './chartState'
 
 function stagePlanProposal(idPrefix: string, goal: Goal, adjustments: Adjustment[]) {
@@ -133,8 +133,57 @@ export const financeTools: ToolSpec[] = [
     ],
   },
   {
+    name: 'list_accepted_transactions',
+    description: 'List the locally extracted transactions the human explicitly accepted for processing. Use this tool—not get_page_text—when categorising spending, identifying merchants, proposing mappings, or inspecting transaction descriptions. It returns only accepted structured rows and never exposes raw statement text, account details, or rejected transactions.',
+    parameters: [],
+    tier: 'read',
+    plugin: 'finance',
+    handler: async () => {
+      await loadApprovedMappings()
+      const commits = await listCommits()
+      return commits.map((transaction) => ({
+        id: transaction.id,
+        date: transaction.date,
+        description: transaction.description,
+        amount: transaction.amount,
+        currency: transaction.currency,
+        category: categorizeTransaction(transaction).category,
+      }))
+    },
+  },
+  {
+    name: 'propose_category_mappings',
+    description: 'Inspect accepted extracted transactions and stage recognized merchant/category rules for human approval. Use this whenever the user asks to categorise spending or show a category chart. It never reads raw statement text or silently applies classifications. For unmatched merchants, use list_accepted_transactions and propose_mapping. After proposing, ask the human to approve the visible mappings; approval updates the chart.',
+    parameters: [],
+    tier: 'staged',
+    plugin: 'finance',
+    handler: async () => {
+      const commits = await listCommits()
+      const approvedPatterns = new Set((await listApprovedMappings()).map((mapping) => mapping.pattern))
+      const pendingPatterns = new Set(getProposals('mapping')
+        .filter((proposal) => proposal.status === 'pending')
+        .map((proposal) => (proposal.payload as CategoryMapping).pattern))
+      let proposed = 0
+      for (const rule of defaultCategoryRules) {
+        if (approvedPatterns.has(rule.pattern) || pendingPatterns.has(rule.pattern)) continue
+        const matchCount = commits.filter((transaction) => transaction.description.toLowerCase().includes(rule.pattern)).length
+        if (matchCount === 0) continue
+        const mapping: CategoryMapping = {
+          id: `map-${rule.pattern.replace(/\s+/g, '-')}-${Date.now()}-${proposed}`,
+          pattern: rule.pattern,
+          merchant: rule.merchant,
+          category: rule.category,
+          matchCount,
+        }
+        stageProposal({ id: mapping.id, type: 'mapping', payload: mapping })
+        proposed++
+      }
+      return { proposed, requiresHumanApproval: proposed > 0 }
+    },
+  },
+  {
     name: 'propose_mapping',
-    description: 'Propose a merchant/category classification rule based on the actual transaction descriptions in this statement set — a rule, not individual rows. One approved rule classifies every transaction that matches it, now and on future statements. Staged until a human approves; applied at read time only, never rewrites a stored transaction.',
+    description: 'Propose a merchant/category classification rule based on accepted transaction descriptions. Call list_accepted_transactions first; raw statement text and get_page_text are not needed for categorisation. This creates a rule, not individual rows. One approved rule classifies every matching transaction, now and on future statements. Staged until a human approves; applied at read time only, never rewrites a stored transaction.',
     parameters: [
       { name: 'pattern', type: 'string', description: 'Lowercase substring to match against transaction descriptions, e.g. "amzn mktp"', required: true },
       { name: 'merchant', type: 'string', description: 'Human-readable merchant name, e.g. "Amazon"', required: true },
@@ -248,7 +297,7 @@ export const financeTools: ToolSpec[] = [
   },
   {
     name: 'get_spend_by_category',
-    description: 'Spend per category across committed transactions, sorted highest first — both the total across all loaded statements and the monthly average. Use `avgMonthly`, not `total`, as a category\'s "currentMonthly" when drafting a plan — `total` is summed across every month of statements loaded, not one month.',
+    description: 'Spend per category across accepted transactions, sorted highest first—both the total across all loaded statements and the monthly average. This and list_accepted_transactions are sufficient for categorisation and planning; never request raw statement text for those tasks. Use `avgMonthly`, not `total`, as a category\'s "currentMonthly" when drafting a plan.',
     parameters: [],
     tier: 'read',
     plugin: 'finance',
@@ -267,11 +316,20 @@ export const financeTools: ToolSpec[] = [
   },
   {
     name: 'plot_spend_by_category',
-    description: 'Render the "Spend by category" chart on the page from committed transactions and currently approved mappings. Unlike the cashflow chart, this one never updates on its own — call this whenever mappings change or you want the human to see current categorisation. Call get_spend_by_category first if you need the numbers yourself; this tool is for changing what\'s on screen, not for reading data.',
+    description: 'Render the "Spend by category" chart from accepted transactions and human-approved mappings. If mappings are pending or none are approved, this waits instead of applying hidden guesses: call propose_category_mappings and ask the human to approve the visible proposals first.',
     parameters: [],
     tier: 'attention',
     plugin: 'finance',
     handler: async () => {
+      const pending = getProposals('mapping').filter((proposal) => proposal.status === 'pending')
+      if (pending.length > 0) {
+        return { rendered: false, reason: 'Category mappings are waiting for human approval.', pendingMappings: pending.length }
+      }
+      const commits = await listCommits()
+      const approved = await listApprovedMappings()
+      if (commits.length > 0 && approved.filter((mapping) => mapping.enabled !== false).length === 0) {
+        return { rendered: false, reason: 'No category mappings are approved. Call propose_category_mappings, then ask the human to approve the proposals.' }
+      }
       const snapshot = await renderSpendByCategory()
       return { rendered: true, categories: snapshot.data.length, renderedAt: snapshot.renderedAt }
     },

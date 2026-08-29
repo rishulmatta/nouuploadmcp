@@ -28,13 +28,18 @@ No agent tool can silently commit a staged transaction, lab result, mapping, or 
 
 ### Option A: deployed app
 
-1. Open [nouploadmcp.app](https://nouploadmcp.app) in the ChatGPT desktop app's in-app browser, which supports WebMCP by default.
-2. Alternatively, use Google Chrome 149 or later, enable `chrome://flags/#enable-webmcp-testing`, restart Chrome, and open the app.
-3. Choose **Financial statements**, then select **Load samples**.
-4. Ask the connected agent: `List the available tools, select the finance plugin, and propose transactions from the loaded statements.`
-5. Accept several proposed transactions in the page.
-6. Ask: `Show my monthly cashflow, propose useful category mappings, and draft a savings plan.`
-7. Review the visible proposals, approve or reject them, edit the plan sliders, then ask: `Is the plan currently feasible?`
+Follow one complete story: turn a year of statements into a realistic plan for buying a Tesla Model Y.
+
+1. Open [nouploadmcp.app](https://nouploadmcp.app) in the ChatGPT desktop app's in-app browser, choose **Financial statements**, then click **Load samples**. The PDFs stay in the browser.
+2. Ask: `Extract the transactions from all my statements and put them on the page for me to review.` The agent creates a review table without receiving the unapproved transaction details.
+3. In the table, select only the transactions you want included. Accept those rows and reject the rest. This is the privacy boundary: subsequent analysis uses only your accepted selection.
+4. Ask: `Use my accepted transactions—not raw statement text—to categorise my spending and show me a pie chart.` The agent reads only the structured rows you approved, proposes merchant mappings for review, and renders the chart. Approve the useful mappings and watch it update.
+5. Ask: `I want to buy a Tesla Model Y and save $50,000 toward it. Use my actual monthly spending to propose a realistic savings plan and put it on the page.` Review the agent's category reductions, monthly savings, timeline, and feasibility result, then accept the proposal.
+6. Make it personal: drag the savings slider, adjust a category target, or add a note such as `Keep my gym membership`. Then ask: `Read the plan as it appears now. Is it still feasible, and what should I change to reach the Tesla goal sooner without cutting the gym?`
+
+The payoff is visible: private PDFs become a user-filtered dataset, an approved category model, and a live goal plan that the human and agent can revise together—without uploading the statements.
+
+Google Chrome 149 or later is also supported after enabling `chrome://flags/#enable-webmcp-testing` and restarting Chrome.
 
 No login, API key, paid account, or special credentials are required for the app. Bundled synthetic PDFs are provided so judges do not need to use personal documents.
 

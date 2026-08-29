@@ -42,7 +42,9 @@ export function buildDocumentTools(plugin: string | null): ToolSpec[] {
     },
     {
       name: 'get_page_text',
-      description: 'Get the text of a specific page, with redaction applied according to the disclosure policy. Requires consent if denied fields are present.',
+      description: plugin === 'finance'
+        ? 'Get raw text from a specific statement page only when the user explicitly needs source-page content. Do not use for transaction categorisation, merchant mappings, charts, spending analysis, or plans; use list_accepted_transactions and finance analysis tools for those tasks. Raw page access requires consent if denied fields are present.'
+        : 'Get the text of a specific page, with redaction applied according to the disclosure policy. Requires consent if denied fields are present.',
       parameters: [
         { name: 'doc', type: 'string', description: 'Document id', required: true },
         { name: 'page', type: 'number', description: 'Page number (1-based)', required: true },

@@ -236,7 +236,7 @@ export default function GoalPanel() {
         : rejectedPlan
           ? []
           : [
-              'I want to save $40,000 for a car — advise where I can save money and draft a plan',
+              'I want to buy a Tesla Model Y and save $50,000 toward it. Use my actual monthly spending to propose a realistic plan and put it on the page',
               'I have a $500,000 home loan at 6% interest — advise where I can save money and draft a repayment plan',
             ]
 
