@@ -49,8 +49,6 @@ export default function FinanceFlow({ documents }: { documents: DocumentMeta[] }
         {reviewing && <ReviewPanel />}
       </StepCard>
 
-      <MappingReviewPanel />
-
       <StepCard n={3} title="Monthly spend" subtitle="Spend, income and net cashflow — based only on the transactions you accepted" prompts={['Summarise the monthly cashflow from only my accepted transactions']}>
         <MonthlyCashflowChart />
       </StepCard>
@@ -63,6 +61,8 @@ export default function FinanceFlow({ documents }: { documents: DocumentMeta[] }
       >
         <CategorySpendChart />
       </StepCard>
+
+      <MappingReviewPanel />
 
       <StepCard
         n="5–7"
