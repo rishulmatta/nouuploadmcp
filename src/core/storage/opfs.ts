@@ -22,7 +22,32 @@ async function getPath(
   if (path.endsWith('/')) return dir
   const name = parts[parts.length - 1]
   if (!name) return dir
-  return await dir.getFileHandle(name, { create })
+  try {
+    return await dir.getFileHandle(name, { create })
+  } catch (error) {
+    // Builds before a7f6c66 traversed one segment too far when creating files,
+    // leaving paths such as `meta.jsonl/meta.jsonl` and
+    // `docs/<id>.pdf/<id>.pdf` in OPFS. Once path traversal was corrected,
+    // browsers with that existing data raised TypeMismatchError because the
+    // outer path was still a directory. Recover the nested file in place so
+    // returning users keep their local data and uploads work without asking
+    // them to clear site storage.
+    try {
+      const legacyDir = await dir.getDirectoryHandle(name)
+      const legacyHandle = await legacyDir.getFileHandle(name)
+      const legacyFile = await legacyHandle.getFile()
+      const legacyBytes = await legacyFile.arrayBuffer()
+
+      await dir.removeEntry(name, { recursive: true })
+      const migratedHandle = await dir.getFileHandle(name, { create: true })
+      const writable = await migratedHandle.createWritable()
+      await writable.write(legacyBytes)
+      await writable.close()
+      return migratedHandle
+    } catch {
+      throw error
+    }
+  }
 }
 
 class OpfsDriver implements StorageDriver {
