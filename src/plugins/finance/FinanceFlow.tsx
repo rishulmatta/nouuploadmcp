@@ -60,9 +60,8 @@ export default function FinanceFlow({ documents }: { documents: DocumentMeta[] }
         prompts={['Use my accepted transactions—not raw statement text—to categorise my spending and show me a pie chart', 'Regenerate category mappings from my accepted transactions', "What's still showing as Other?", 'Render the spend by category chart']}
       >
         <CategorySpendChart />
+        <MappingReviewPanel />
       </StepCard>
-
-      <MappingReviewPanel />
 
       <StepCard
         n="5–7"
